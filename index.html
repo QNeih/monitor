@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>Monitor</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <input id="q" type="search" placeholder="Haltestelle suchen" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <ul id="results" hidden></ul>
+</header>
+<main>
+  <p id="empty" hidden>Suche eine Haltestelle und pinne sie an.</p>
+  <section id="pins"></section>
+  <p id="status" role="status"></p>
+</main>
+<script src="app.js" type="module"></script>
+</body>
+</html>
