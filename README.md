@@ -1,11 +1,12 @@
 # Monitor
 
-Minimalistische PWA für Live-Abfahrten im KVB-Netz (Köln). Haltestelle suchen, anpinnen, die nächsten 3 Abfahrten sehen. Aktualisiert alle 30 s.
+Minimalistische PWA für Live-Abfahrten im KVB-Netz (Köln). Ein Tab pro Haltestelle, darin die Abfahrtstafel der KVB-Fahrplanauskunft. Vorbelegt: Grünstr. und Mülheim Berliner Str.; mit + weitere hinzufügen, mit × entfernen. Lädt alle 2 min neu.
 
 - Reines HTML/CSS/JS, kein Build.
-- Pins liegen im `localStorage`.
+- Haltestellen liegen im `localStorage` (Standard in `config.js`, `DEFAULT_STOPS`).
 - Service Worker cacht nur die App-Shell, nie Abfahrten.
-- Datenquelle: `config.js` (`API`), standardmäßig `v6.db.transport.rest` (HAFAS, CORS). Fällt sie aus, dort die Basis-URL tauschen.
+- Datenquelle: KVB-Fahrplanauskunft `auskunft.kvb.koeln` als iframe (`config.js`, `BOARD`), so wie KVB sie selbst auf `kvb.koeln/qr/<id>/` einbettet.
+- Warum keine API: `v6.db.transport.rest` ist abgeschaltet (Stand 11/2026), die VRS-Abfahrten (`ekap-web.vrs.de`) verlangen ein Token und senden kein CORS. Die VRS-Haltestellensuche ist offen.
 
 ## Deploy
 

@@ -12,14 +12,12 @@
 </head>
 <body>
 <header>
-  <input id="q" type="search" placeholder="Haltestelle suchen" autocomplete="off" autocapitalize="off" spellcheck="false">
-  <ul id="results" hidden></ul>
+  <nav id="tabs"></nav>
+  <button id="add" aria-label="Haltestelle hinzufügen">+</button>
+  <button id="del" aria-label="Aktive Haltestelle entfernen">×</button>
 </header>
-<main>
-  <p id="empty" hidden>Suche eine Haltestelle und pinne sie an.</p>
-  <section id="pins"></section>
-  <p id="status" role="status"></p>
-</main>
+<p id="empty" hidden>Mit + eine Haltestelle hinzufügen.</p>
+<iframe id="board" title="KVB Abfahrten"></iframe>
 <script src="app.js" type="module"></script>
 </body>
 </html>
