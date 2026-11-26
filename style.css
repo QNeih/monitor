@@ -1,7 +1,7 @@
 /* Palette aus der (gefilterten) VRS-Tafel gemessen, damit App und Tafel eins sind:
    --bg Seitenhintergrund, --surface Zeitboxen/Fußzeile, --card Kartenkopf, --row Zeilen,
    --fg Tafeltext, --acc Grün für pünktlich, --red verspätet. */
-:root{--bg:#1d2727;--surface:#1a1a1a;--card:#1f4d00;--row:#1c3305;--fg:#c3c0c5;--dim:#858b8b;--acc:#109c2c;--red:#e06d6e;--r:8px;color-scheme:dark}
+:root{--bg:#222525;--surface:#1a1a1a;--card:#334228;--row:#21261d;--fg:#c3c0c5;--dim:#858b8b;--acc:#56825e;--red:#c08585;--r:8px;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
@@ -14,14 +14,14 @@ header{display:flex;gap:8px;align-items:center;padding:12px 12px 4px 16px}
 #tabs button b{font-weight:600;color:var(--fg)}
 #tabs button small{font-size:.75rem}
 #tabs button.on{background:var(--card);color:var(--fg)}
-#tabs button.on small{color:#9fc48a}
+#tabs button.on small{color:#a9b89f}
 .icon{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:var(--r);color:var(--dim);background:var(--surface)}
 .icon:hover,.icon:focus-visible{color:var(--fg)}
 
 /* Die VRS-Tafel ist hell und für breitere Bildschirme gebaut:
    breiter rendern und herunterskalieren (kein Überlauf), per Filter abdunkeln. */
 #stage{--z:.82;flex:1;position:relative;overflow:hidden}
-#board{position:absolute;top:0;left:0;border:0;width:calc(100% / var(--z));height:calc(100% / var(--z));transform:scale(var(--z));transform-origin:0 0;filter:invert(.93) hue-rotate(195deg) saturate(1.1) brightness(.88);background:#fff}
+#board{position:absolute;top:0;left:0;border:0;width:calc(100% / var(--z));height:calc(100% / var(--z));transform:scale(var(--z));transform-origin:0 0;filter:invert(.93) hue-rotate(195deg) saturate(.35) brightness(.88);background:#fff}
 #empty{color:var(--dim);padding:24px 16px;margin:0}
 
 dialog{border:0;padding:0;background:transparent;color:inherit;max-width:none;width:100%;margin:auto 0 0;max-height:90vh}
