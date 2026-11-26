@@ -1,7 +1,7 @@
-/* Palette aus der (gefilterten) VRS-Tafel gemessen, damit App und Tafel eins sind:
+/* Palette = Originalfarben der VRS-Tafel (ohne Filter), damit App und Tafel eins sind:
    --bg Seitenhintergrund, --surface Zeitboxen/Fußzeile, --card Kartenkopf, --row Zeilen,
-   --fg Tafeltext, --acc Grün für pünktlich, --red verspätet. */
-:root{--bg:#222525;--surface:#1a1a1a;--card:#334228;--row:#21261d;--fg:#c3c0c5;--dim:#858b8b;--acc:#56825e;--red:#c08585;--r:8px;color-scheme:dark}
+   --fg Tafeltext, --acc VRS-Grün (Links), --red verspätet. */
+:root{--bg:#dae6e4;--surface:#f2f2f2;--card:#b9d164;--row:#e1e8c7;--fg:#15141a;--dim:#5b6664;--acc:#007d70;--red:#d40032;--r:8px;color-scheme:light}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
@@ -14,19 +14,18 @@ header{display:flex;gap:8px;align-items:center;padding:12px 12px 4px 16px}
 #tabs button b{font-weight:600;color:var(--fg)}
 #tabs button small{font-size:.75rem}
 #tabs button.on{background:var(--card);color:var(--fg)}
-#tabs button.on small{color:#a9b89f}
+#tabs button.on small{color:#3d4a1c}
 .icon{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:var(--r);color:var(--dim);background:var(--surface)}
 .icon:hover,.icon:focus-visible{color:var(--fg)}
 
-/* Die VRS-Tafel ist hell und für breitere Bildschirme gebaut:
-   breiter rendern und herunterskalieren (kein Überlauf), per Filter abdunkeln. */
+/* Die VRS-Tafel ist für breitere Bildschirme gebaut: breiter rendern und herunterskalieren (kein Überlauf). */
 #stage{--z:.82;flex:1;position:relative;overflow:hidden}
-#board{position:absolute;top:0;left:0;border:0;width:calc(100% / var(--z));height:calc(100% / var(--z));transform:scale(var(--z));transform-origin:0 0;filter:invert(.93) hue-rotate(195deg) saturate(.35) brightness(.88);background:#fff}
+#board{position:absolute;top:0;left:0;border:0;width:calc(100% / var(--z));height:calc(100% / var(--z));transform:scale(var(--z));transform-origin:0 0;background:var(--bg)}
 #empty{color:var(--dim);padding:24px 16px;margin:0}
 
 dialog{border:0;padding:0;background:transparent;color:inherit;max-width:none;width:100%;margin:auto 0 0;max-height:90vh}
-dialog::backdrop{background:rgba(0,0,0,.6)}
-.sheet{background:var(--surface);border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;max-width:560px;margin:0 auto}
+dialog::backdrop{background:rgba(21,20,26,.45)}
+.sheet{background:var(--surface);box-shadow:0 -4px 24px rgba(0,0,0,.12);border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;max-width:560px;margin:0 auto}
 .sheet-head{display:flex;justify-content:space-between;align-items:center}
 .sheet h2{font-size:1.1rem;margin:0}
 .sheet h3{font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin:8px 0 0}
@@ -37,9 +36,9 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 #list li .icon{width:34px;height:34px;background:none}
 .sheet-head .icon{background:none}
 label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--dim)}
-input{font:inherit;color:var(--fg);background:var(--bg);border:1px solid transparent;border-radius:var(--r);padding:10px 12px}
+input{font:inherit;color:var(--fg);background:#fff;border:1px solid #cdd8d6;border-radius:var(--r);padding:10px 12px}
 input:focus{outline:none;border-color:var(--acc)}
 .hint{font-size:.8rem;color:var(--dim);margin:0}
-.hint a{color:var(--fg)}
+.hint a{color:var(--acc)}
 .err{color:var(--red);font-size:.85rem;margin:0}
-.primary{background:var(--card);color:var(--fg);border-radius:var(--r);padding:12px;font-weight:600}
+.primary{background:var(--acc);color:#fff;border-radius:var(--r);padding:12px;font-weight:600}
