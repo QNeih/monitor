@@ -1,4 +1,4 @@
-import { DEFAULT_STOPS, KVB_BOARD, REFRESH_MS } from './config.js?v=12';
+import { DEFAULT_STOPS, KVB_BOARD, RELOAD_AT, STALE_MS } from './config.js?v=13';
 
 const $ = (s) => document.querySelector(s);
 const tabs = $('#tabs'), stage = $('#stage'), editor = $('#editor'), list = $('#list');
@@ -77,8 +77,13 @@ $('#f-add').onclick = () => {
 
 draw();
 load();
-const refresh = () => { if (!document.hidden && Date.now() - loadedAt >= REFRESH_MS) load(); };
-setInterval(refresh, 5000);
-document.addEventListener('visibilitychange', refresh);
+// Neu laden genau zu den Sekunden in RELOAD_AT (nach der Uhr, nicht im Abstand zum letzten Laden).
+function schedule() {
+  const now = new Date(), s = now.getSeconds() + now.getMilliseconds() / 1000;
+  const next = RELOAD_AT.find((t) => t > s) ?? RELOAD_AT[0] + 60;
+  setTimeout(() => { if (!document.hidden) load(); schedule(); }, (next - s) * 1000);
+}
+schedule();
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - loadedAt > STALE_MS) load(); });
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

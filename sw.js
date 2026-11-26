@@ -3,7 +3,7 @@
 // Sonst liefert der Browser nach einem Deploy bis zu 10 min alte Dateien (GitHub Pages: max-age=600),
 // und neue index.html + altes app.js passen nicht zusammen.
 // Bei jeder Änderung an App-Dateien: V hier, ?v= in index.html und den Import in app.js hochzählen.
-const V = 12;
+const V = 13;
 const CACHE = 'monitor-v' + V;
 const SHELL = ['./', 'index.html', `style.css?v=${V}`, `app.js?v=${V}`, `config.js?v=${V}`, 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
 const fresh = (url) => fetch(url, { cache: 'no-cache' });
