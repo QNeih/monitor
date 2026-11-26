@@ -4,7 +4,7 @@
 :root{--bg:#dae6e4;--surface:#f2f2f2;--card:#b9d164;--row:#e1e8c7;--fg:#15141a;--dim:#5b6664;--acc:#007d70;--red:#d40032;--on-card:#3d4a1c;--input:#fff;--input-line:#cdd8d6;--r:8px;color-scheme:light}
 /* Dunkel: Tafel per Filter umgekehrt, Palette aus der gefilterten Tafel gemessen. */
 html.dark{--bg:#202626;--surface:#1a1a1a;--card:#2a4712;--row:#1e2716;--fg:#c2c1c4;--dim:#858b8b;--acc:#487779;--red:#cc9192;--on-card:#a9bb98;--input:#202626;--input-line:#2c3434;color-scheme:dark}
-html.dark #board{filter:invert(.93) hue-rotate(195deg) saturate(.7) brightness(.88)}
+html.dark .board{filter:invert(.93) hue-rotate(195deg) saturate(.7) brightness(.88)}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
@@ -23,7 +23,9 @@ header{display:flex;gap:8px;align-items:center;padding:12px 12px 4px 16px}
 
 /* Die VRS-Tafel ist für breitere Bildschirme gebaut: breiter rendern und herunterskalieren (kein Überlauf). */
 #stage{--z:.82;flex:1;position:relative;overflow:hidden}
-#board{position:absolute;top:0;left:0;border:0;width:calc(100% / var(--z));height:calc(100% / var(--z));transform:scale(var(--z));transform-origin:0 0;background:var(--bg)}
+/* .loading: neue Tafel lädt unsichtbar hinter der alten. */
+.board.loading{visibility:hidden}
+.board{position:absolute;top:0;left:0;border:0;width:calc(100% / var(--z));height:calc(100% / var(--z));transform:scale(var(--z));transform-origin:0 0;background:var(--bg)}
 #empty{color:var(--dim);padding:24px 16px;margin:0}
 
 dialog{border:0;padding:0;background:transparent;color:inherit;max-width:none;width:100%;margin:auto 0 0;max-height:90vh}

@@ -18,5 +18,5 @@ export const DEFAULT_STOPS = [
 // Ohne eigenen VRS-Monitor: ungefilterte KVB-Tafel (nur Stadtbahn, 5 Abfahrten).
 export const KVB_BOARD = (name) => `https://auskunft.kvb.koeln/?P=SQ&input=${encodeURIComponent(name)}&products=2&maxJourneys=5&start=1`;
 
-// Die Monitore aktualisieren sich selbst (60 s). Nach so langer Zeit im Hintergrund beim Zurückkehren neu laden:
-export const STALE_MS = 60000;
+// So oft lädt die App die Tafel neu (die VRS-Tafel tut es im iframe nicht selbst), auch beim Zurückkehren aus dem Hintergrund:
+export const REFRESH_MS = 60000;

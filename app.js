@@ -1,7 +1,7 @@
-import { DEFAULT_STOPS, KVB_BOARD, STALE_MS } from './config.js?v=11';
+import { DEFAULT_STOPS, KVB_BOARD, REFRESH_MS } from './config.js?v=12';
 
 const $ = (s) => document.querySelector(s);
-const tabs = $('#tabs'), frame = $('#board'), editor = $('#editor'), list = $('#list');
+const tabs = $('#tabs'), stage = $('#stage'), editor = $('#editor'), list = $('#list');
 
 const get = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const set = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -12,10 +12,17 @@ let stops = get('stops3', DEFAULT_STOPS);
 let active = Math.max(0, Math.min(get('active', 0), stops.length - 1));
 let loadedAt = 0;
 
+// Die VRS-Tafel aktualisiert sich im iframe nicht selbst: ihr Skript liest beim Start eine Eigenschaft
+// von window.parent, das wirft fremd eingebettet einen SecurityError, und ihr 60-s-Timer startet nie.
+// Darum lädt die App die Tafel selbst neu: neuen iframe unsichtbar laden, erst nach dem Laden tauschen (kein Flackern).
 function load() {
-  if (!stops.length) { frame.removeAttribute('src'); return; }
+  const old = stage.querySelectorAll('iframe');
+  if (!stops.length) { old.forEach((f) => f.remove()); return; }
   const s = stops[active];
-  frame.src = s.url || KVB_BOARD(s.name);
+  const f = el('iframe', { className: 'board loading', title: 'Abfahrten' });
+  f.onload = () => { f.classList.remove('loading'); old.forEach((o) => o.remove()); };
+  f.src = s.url || KVB_BOARD(s.name);
+  stage.append(f);
   loadedAt = Date.now();
 }
 
@@ -27,7 +34,6 @@ function draw() {
     return b;
   }));
   $('#empty').hidden = stops.length > 0;
-  frame.hidden = !stops.length;
   list.replaceChildren(...stops.map((s, i) => {
     const x = el('button', { type: 'button', className: 'icon', textContent: '✕' });
     x.setAttribute('aria-label', s.name + ' entfernen');
@@ -71,6 +77,8 @@ $('#f-add').onclick = () => {
 
 draw();
 load();
-document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - loadedAt > STALE_MS) load(); });
+const refresh = () => { if (!document.hidden && Date.now() - loadedAt >= REFRESH_MS) load(); };
+setInterval(refresh, 5000);
+document.addEventListener('visibilitychange', refresh);
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
