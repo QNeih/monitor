@@ -6,8 +6,8 @@ const tabs = $('#tabs'), frame = $('#board'), add = $('#add'), del = $('#del');
 const get = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const set = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
-// v2: Haltestellen sind Objekte {name, note?, url}. Alte Einträge (nur Namen) werden verworfen.
-let stops = get('stops2', DEFAULT_STOPS);
+// stops3: Haltestellen sind Objekte {name, note?, url}. Alte Einträge (nur Namen) werden verworfen.
+let stops = get('stops3', DEFAULT_STOPS);
 let active = Math.max(0, Math.min(get('active', 0), stops.length - 1));
 let loadedAt = 0;
 
@@ -32,7 +32,7 @@ function draw() {
   frame.hidden = !stops.length;
 }
 
-const save = () => { set('stops2', stops); set('active', active); draw(); load(); };
+const save = () => { set('stops3', stops); set('active', active); draw(); load(); };
 
 add.onclick = () => {
   const name = prompt('Haltestelle (z. B. "Neumarkt")')?.trim();
