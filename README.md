@@ -1,11 +1,12 @@
 # Monitor
 
-Minimalistische PWA für Live-Abfahrten im KVB-Netz (Köln). Ein Tab pro Haltestelle, darin die Abfahrtstafel der KVB-Fahrplanauskunft. Vorbelegt: Grünstr. und Mülheim Berliner Str.; mit + weitere hinzufügen, mit × entfernen. Lädt alle 2 min neu.
+Minimalistische PWA für Live-Abfahrten im KVB-Netz (Köln). Ein Tab pro Haltestelle, darin ein VRS-Abfahrtsmonitor, gefiltert auf Linie und Richtung. Vorbelegt: Grünstr. (4 → Schlebusch) und Mülheim Berliner Str. (4 → Bocklemünd), je 4 Abfahrten. Mit + weitere hinzufügen (VRS-Monitor-Link oder ungefilterte KVB-Tafel), mit × entfernen.
 
 - Reines HTML/CSS/JS, kein Build.
 - Haltestellen liegen im `localStorage` (Standard in `config.js`, `DEFAULT_STOPS`).
+- Filter ändern (Richtung, Anzahl, Farben): `admin`-Link aus `config.js` öffnen; der Anzeige-Link bleibt gleich. Neuer Monitor: vrs.de/fahrplanauskunft/abfahrtsmonitor.
 - Service Worker cacht nur die App-Shell, nie Abfahrten.
-- Datenquelle: KVB-Fahrplanauskunft `auskunft.kvb.koeln` als iframe (`config.js`, `BOARD`), so wie KVB sie selbst auf `kvb.koeln/qr/<id>/` einbettet.
+- Datenquelle: VRS-Abfahrtsmonitor (`vrs.de/am/s/<id>`) als iframe, aktualisiert sich selbst alle 60 s. Fallback ohne Monitor: KVB-Fahrplanauskunft `auskunft.kvb.koeln` (nur Stadtbahn, 5 Abfahrten, kein Richtungsfilter).
 - Warum keine API: `v6.db.transport.rest` ist abgeschaltet (Stand 11/2026), die VRS-Abfahrten (`ekap-web.vrs.de`) verlangen ein Token und senden kein CORS. Die VRS-Haltestellensuche ist offen.
 
 ## Deploy
