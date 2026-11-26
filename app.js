@@ -1,12 +1,13 @@
 import { DEFAULT_STOPS, KVB_BOARD, STALE_MS } from './config.js';
 
 const $ = (s) => document.querySelector(s);
-const tabs = $('#tabs'), frame = $('#board'), add = $('#add'), del = $('#del');
+const tabs = $('#tabs'), frame = $('#board'), editor = $('#editor'), list = $('#list');
 
 const get = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const set = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 
-// stops3: Haltestellen sind Objekte {name, note?, url}. Alte Einträge (nur Namen) werden verworfen.
+// stops3: Haltestellen sind Objekte {name, note?, url?}.
 let stops = get('stops3', DEFAULT_STOPS);
 let active = Math.max(0, Math.min(get('active', 0), stops.length - 1));
 let loadedAt = 0;
@@ -20,31 +21,42 @@ function load() {
 
 function draw() {
   tabs.replaceChildren(...stops.map((s, i) => {
-    const b = document.createElement('button');
-    b.className = i === active ? 'on' : '';
-    b.append(s.name);
-    if (s.note) { const n = document.createElement('small'); n.textContent = s.note; b.append(n); }
+    const b = el('button', { className: i === active ? 'on' : '' }, el('b', { textContent: s.name }));
+    if (s.note) b.append(el('small', { textContent: s.note }));
     b.onclick = () => { if (i === active) return load(); active = i; set('active', i); draw(); load(); };
     return b;
   }));
-  del.hidden = !stops.length;
   $('#empty').hidden = stops.length > 0;
   frame.hidden = !stops.length;
+  list.replaceChildren(...stops.map((s, i) => {
+    const x = el('button', { type: 'button', className: 'icon', textContent: '✕' });
+    x.setAttribute('aria-label', s.name + ' entfernen');
+    x.onclick = () => {
+      if (!confirm(`„${s.name}“ entfernen?`)) return;
+      stops = stops.filter((_, j) => j !== i);
+      if (active >= i && active > 0) active--;
+      save();
+    };
+    return el('li', {}, el('span', {}, s.name, el('small', { textContent: s.note || (s.url ? '' : 'KVB-Tafel, ungefiltert') })), x);
+  }));
 }
 
 const save = () => { set('stops3', stops); set('active', active); draw(); load(); };
 
-add.onclick = () => {
-  const name = prompt('Haltestelle (z. B. "Neumarkt")')?.trim();
-  if (!name) return;
-  const url = prompt('Link eines VRS-Abfahrtsmonitors (vrs.de/am/s/…), leer = KVB-Tafel')?.trim() || '';
-  if (url && !/^https:\/\/www\.vrs\.de\/am\/s\//.test(url)) { alert('Kein VRS-Monitor-Link.'); return; }
-  stops = [...stops, { name, url }]; active = stops.length - 1; save();
-};
+$('#edit').onclick = () => editor.showModal();
+editor.addEventListener('click', (e) => { if (e.target === editor) editor.close(); });
 
-del.onclick = () => {
-  if (!confirm(`„${stops[active].name}“ entfernen?`)) return;
-  stops = stops.filter((_, i) => i !== active); active = Math.max(0, active - 1); save();
+$('#f-add').onclick = () => {
+  const name = $('#f-name').value.trim(), note = $('#f-note').value.trim(), url = $('#f-url').value.trim();
+  const err = $('#f-err');
+  err.hidden = true;
+  if (!name) { err.textContent = 'Name fehlt.'; err.hidden = false; return; }
+  if (url && !/^https:\/\/www\.vrs\.de\/am\/s\/[0-9a-f]+\/?$/.test(url)) { err.textContent = 'Das ist kein VRS-Anzeige-Link (https://www.vrs.de/am/s/…).'; err.hidden = false; return; }
+  stops = [...stops, { name, note, url }];
+  active = stops.length - 1;
+  for (const id of ['#f-name', '#f-note', '#f-url']) $(id).value = '';
+  save();
+  editor.close();
 };
 
 draw();
