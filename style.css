@@ -1,4 +1,4 @@
-:root{--bg:#0e0f11;--card:#17191c;--fg:#e9eaec;--dim:#8b9097;--line:#2a2d32;--acc:#ff4d4d;color-scheme:dark}
+:root{--bg:#08130e;--card:#10221a;--fg:#e4f2ea;--dim:#86a394;--line:#1c3528;--acc:#34c77b;--acc-bg:#123a26;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
@@ -10,7 +10,7 @@ header{display:flex;gap:8px;align-items:center;padding:10px 12px 10px 16px;borde
 #tabs button{flex:none;display:flex;flex-direction:column;align-items:flex-start;line-height:1.25;padding:7px 12px;border-radius:10px;background:var(--card);color:var(--dim);white-space:nowrap}
 #tabs button b{font-weight:600;color:var(--fg)}
 #tabs button small{font-size:.75rem}
-#tabs button.on{background:#2a1416;box-shadow:inset 0 0 0 1px var(--acc)}
+#tabs button.on{background:var(--acc-bg);box-shadow:inset 0 0 0 1px var(--acc)}
 #tabs button.on b{color:var(--acc)}
 .icon{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:10px;color:var(--dim)}
 .icon:hover,.icon:focus-visible{background:var(--card);color:var(--fg)}
@@ -18,7 +18,7 @@ header{display:flex;gap:8px;align-items:center;padding:10px 12px 10px 16px;borde
 /* Die VRS-Tafel ist hell und für breitere Bildschirme gebaut:
    breiter rendern und herunterskalieren (kein Überlauf), per Filter abdunkeln. */
 #stage{--z:.82;flex:1;position:relative;overflow:hidden}
-#board{position:absolute;top:0;left:0;border:0;width:calc(100% / var(--z));height:calc(100% / var(--z));transform:scale(var(--z));transform-origin:0 0;filter:invert(.92) hue-rotate(180deg) saturate(1.3);background:#fff}
+#board{position:absolute;top:0;left:0;border:0;width:calc(100% / var(--z));height:calc(100% / var(--z));transform:scale(var(--z));transform-origin:0 0;filter:invert(.93) hue-rotate(195deg) saturate(1.25);background:#fff}
 #empty{color:var(--dim);padding:24px 16px;margin:0}
 
 dialog{border:0;padding:0;background:transparent;color:inherit;max-width:none;width:100%;margin:auto 0 0;max-height:90vh}
@@ -38,4 +38,4 @@ input:focus{outline:none;border-color:var(--acc)}
 .hint{font-size:.8rem;color:var(--dim);margin:0}
 .hint a{color:var(--fg)}
 .err{color:var(--acc);font-size:.85rem;margin:0}
-.primary{background:var(--acc);color:#fff;border-radius:10px;padding:12px;font-weight:600}
+.primary{background:var(--acc);color:#04130b;border-radius:10px;padding:12px;font-weight:600}
