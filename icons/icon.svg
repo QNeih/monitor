@@ -1,18 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#0b1a13"/>
-  <!-- Stromabnehmer -->
-  <path d="M256 104 L214 138 M256 104 L298 138" stroke="#5be39a" stroke-width="12" stroke-linecap="round"/>
-  <path d="M206 98 H306" stroke="#5be39a" stroke-width="12" stroke-linecap="round"/>
-  <!-- Wagenkasten -->
-  <rect x="164" y="138" width="184" height="226" rx="38" fill="#2fbf71"/>
-  <!-- Frontscheibe -->
-  <rect x="188" y="166" width="136" height="96" rx="16" fill="#0b1a13"/>
-  <!-- Liniennummer -->
-  <rect x="226" y="148" width="60" height="10" rx="5" fill="#0b1a13" opacity=".55"/>
-  <!-- Scheinwerfer -->
-  <circle cx="204" cy="318" r="15" fill="#eafff3"/>
-  <circle cx="308" cy="318" r="15" fill="#eafff3"/>
-  <!-- Fahrwerk und Schienen -->
-  <path d="M196 364 L176 398 M316 364 L336 398" stroke="#5be39a" stroke-width="12" stroke-linecap="round"/>
-  <path d="M140 404 H372" stroke="#5be39a" stroke-width="12" stroke-linecap="round"/>
+  <rect width="512" height="512" fill="#1f4d00"/>
+  <path d="M256 112 L218 142 M256 112 L294 142 M210 106 H302" stroke="#c3c0c5" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <rect x="172" y="142" width="168" height="206" rx="34" fill="#109c2c"/>
+  <rect x="194" y="168" width="124" height="86" rx="14" fill="#1d2727"/>
+  <circle cx="210" cy="306" r="13" fill="#c3c0c5"/>
+  <circle cx="302" cy="306" r="13" fill="#c3c0c5"/>
+  <path d="M202 348 L184 380 M310 348 L328 380 M150 386 H362" stroke="#c3c0c5" stroke-width="12" stroke-linecap="round" fill="none"/>
 </svg>
