@@ -1,4 +1,4 @@
-import { DEFAULT_STOPS, KVB_BOARD, STALE_MS } from './config.js';
+import { DEFAULT_STOPS, KVB_BOARD, STALE_MS } from './config.js?v=11';
 
 const $ = (s) => document.querySelector(s);
 const tabs = $('#tabs'), frame = $('#board'), editor = $('#editor'), list = $('#list');
