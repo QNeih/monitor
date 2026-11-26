@@ -44,6 +44,16 @@ function draw() {
 const save = () => { set('stops3', stops); set('active', active); draw(); load(); };
 
 $('#edit').onclick = () => editor.showModal();
+
+// Dunkles Design (Standard: aus). Die Klasse setzt schon ein Inline-Skript im <head>, damit nichts aufblitzt.
+const dark = $('#dark'), meta = document.querySelector('meta[name="theme-color"]');
+const applyDark = (on) => {
+  document.documentElement.classList.toggle('dark', on);
+  meta.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+};
+dark.checked = !!get('dark', false);
+applyDark(dark.checked);
+dark.onchange = () => { set('dark', dark.checked); applyDark(dark.checked); };
 editor.addEventListener('click', (e) => { if (e.target === editor) editor.close(); });
 
 $('#f-add').onclick = () => {

@@ -1,7 +1,10 @@
 /* Palette = Originalfarben der VRS-Tafel (ohne Filter), damit App und Tafel eins sind:
    --bg Seitenhintergrund, --surface Zeitboxen/Fußzeile, --card Kartenkopf, --row Zeilen,
    --fg Tafeltext, --acc VRS-Grün (Links), --red verspätet. */
-:root{--bg:#dae6e4;--surface:#f2f2f2;--card:#b9d164;--row:#e1e8c7;--fg:#15141a;--dim:#5b6664;--acc:#007d70;--red:#d40032;--r:8px;color-scheme:light}
+:root{--bg:#dae6e4;--surface:#f2f2f2;--card:#b9d164;--row:#e1e8c7;--fg:#15141a;--dim:#5b6664;--acc:#007d70;--red:#d40032;--on-card:#3d4a1c;--input:#fff;--input-line:#cdd8d6;--r:8px;color-scheme:light}
+/* Dunkel: Tafel per Filter umgekehrt, Palette aus der gefilterten Tafel gemessen. */
+html.dark{--bg:#202626;--surface:#1a1a1a;--card:#2a4712;--row:#1e2716;--fg:#c2c1c4;--dim:#858b8b;--acc:#487779;--red:#cc9192;--on-card:#a9bb98;--input:#202626;--input-line:#2c3434;color-scheme:dark}
+html.dark #board{filter:invert(.93) hue-rotate(195deg) saturate(.7) brightness(.88)}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
@@ -14,7 +17,7 @@ header{display:flex;gap:8px;align-items:center;padding:12px 12px 4px 16px}
 #tabs button b{font-weight:600;color:var(--fg)}
 #tabs button small{font-size:.75rem}
 #tabs button.on{background:var(--card);color:var(--fg)}
-#tabs button.on small{color:#3d4a1c}
+#tabs button.on small{color:var(--on-card)}
 .icon{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:var(--r);color:var(--dim);background:var(--surface)}
 .icon:hover,.icon:focus-visible{color:var(--fg)}
 
@@ -36,9 +39,16 @@ dialog::backdrop{background:rgba(21,20,26,.45)}
 #list li .icon{width:34px;height:34px;background:none}
 .sheet-head .icon{background:none}
 label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--dim)}
-input{font:inherit;color:var(--fg);background:#fff;border:1px solid #cdd8d6;border-radius:var(--r);padding:10px 12px}
+input{font:inherit;color:var(--fg);background:var(--input);border:1px solid var(--input-line);border-radius:var(--r);padding:10px 12px}
 input:focus{outline:none;border-color:var(--acc)}
 .hint{font-size:.8rem;color:var(--dim);margin:0}
 .hint a{color:var(--acc)}
 .err{color:var(--red);font-size:.85rem;margin:0}
 .primary{background:var(--acc);color:#fff;border-radius:var(--r);padding:12px;font-weight:600}
+
+/* Schalter */
+.switch{flex-direction:row;justify-content:space-between;align-items:center;background:var(--bg);border-radius:var(--r);padding:12px;font-size:1rem;color:var(--fg);cursor:pointer}
+.switch input{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--input-line);border:0;padding:0;position:relative;cursor:pointer;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .15s}
+.switch input:checked{background:var(--acc)}
+.switch input:checked::after{transform:translateX(18px)}
