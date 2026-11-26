@@ -12,3 +12,7 @@ Minimalistische PWA für Live-Abfahrten im KVB-Netz (Köln). Ein Tab pro Haltest
 ## Deploy
 
 GitHub → Settings → Pages → Source: **GitHub Actions**. Jeder Push auf `main` veröffentlicht die Seite.
+
+## Worker (Datenquelle für die eigene Anzeige)
+
+`worker/worker.js` läuft als Cloudflare Worker `monitor` unter `https://monitor.qneih.workers.dev/?i=<VRS-Monitor-ID>`. Er holt die VRS-Abfahrten (`vrs.de/index.php?eID=tx_vrsinfo_departuremonitor&i=<id>`, offen, aber ohne CORS) und gibt sie mit CORS-Freigabe weiter. Nur die IDs in `ALLOWED`. Neue Haltestelle: ID dort eintragen und neu veröffentlichen.
