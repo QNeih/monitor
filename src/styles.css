@@ -46,6 +46,9 @@ s{color:var(--dim);font-size:.85em}
 .cards{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .card{width:100%;display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r);padding:12px 8px 12px 12px;text-align:left;box-shadow:0 1px 0 var(--line)}
 .card.gone{opacity:.5}
+/* Haus: Rand links immer da (unsichtbar), damit die gewählte Fahrt nichts verschiebt */
+.cards:not(.compact) .card{border-left:3px solid var(--card);padding-left:9px}
+.cards:not(.compact) .card.sel{border-left-color:var(--acc-ink)}
 .line{flex:none;min-width:38px;height:38px;padding:0 6px;display:grid;place-items:center;border-radius:10px;background:var(--acc);font-weight:700;font-size:1.1rem}
 .line.sm{min-width:28px;height:26px;font-size:.9rem;border-radius:7px;color:var(--fg)}
 .what{flex:1;min-width:0;display:flex;flex-direction:column}

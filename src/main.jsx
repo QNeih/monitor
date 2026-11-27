@@ -51,7 +51,7 @@ function App() {
   return (
     <>
       <main>
-        {tab === 'home' && <Home onPickTrip={pickTrip} />}
+        {tab === 'home' && <Home onPickTrip={pickTrip} trip={expired ? null : trip} />}
         {tab === 'jump' && <Jump trip={expired ? null : trip} setTrip={setTripRaw} onHome={() => setTab('home')} />}
         {tab === 'settings' && <Settings settings={settings} setSettings={setSettings} />}
       </main>

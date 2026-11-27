@@ -4,7 +4,7 @@ import { Arrow, Chevron, Down, Swap } from './icons.jsx';
 import StopSearch from './StopSearch.jsx';
 
 // Haus: eigene Haltestellen (anfangs leer, gespeichert im Gerät), Richtungsumschalter, Abfahrten als Karten.
-export default function Home({ onPickTrip }) {
+export default function Home({ onPickTrip, trip }) {
   const [stops, setStops] = useStored('stops', []);
   const [active, setActive] = useStored('activeStop', null);
   const [dirs, setDirs] = useStored('dirs', {}); // Haltestelle → Gleis-Filter ('all' oder 'Gleis 1' …)
@@ -34,7 +34,7 @@ export default function Home({ onPickTrip }) {
   return (
     <section className="page">
       <Board key={stop.id} stop={stop} filter={dirs[stop.id] || 'all'} setFilter={(f) => setDirs((d) => ({ ...d, [stop.id]: f }))}
-        onOpenStops={() => setSheet(true)} onPickTrip={onPickTrip} />
+        onOpenStops={() => setSheet(true)} onPickTrip={onPickTrip} trip={trip} />
       {sheet && (
         <Sheet title="Haltestellen" onClose={() => setSheet(false)}>
           <ul className="stoplist">
@@ -52,7 +52,7 @@ export default function Home({ onPickTrip }) {
   );
 }
 
-function Board({ stop, filter, setFilter, onOpenStops, onPickTrip }) {
+function Board({ stop, filter, setFilter, onOpenStops, onPickTrip, trip }) {
   const [deps, setDeps] = useState(null);
   const [okAt, setOkAt] = useState(0);
   const [err, setErr] = useState('');
@@ -102,17 +102,18 @@ function Board({ stop, filter, setFilter, onOpenStops, onPickTrip }) {
       {!deps && !err && <p className="hint pad">Lade Abfahrten …</p>}
       {deps && !shown.length && <p className="hint pad">Keine Abfahrten in dieser Richtung.</p>}
       <ul className="cards">
-        {shown.map((d) => <DepartureCard key={d.key} d={d} now={now} seconds={d === shown.find((x) => x.ts > now)} onClick={() => onPickTrip({ stop, dep: d })} />)}
+        {shown.map((d) => <DepartureCard key={d.key} d={d} now={now}
+          sel={!!trip && trip.stopId === stop.id && trip.line === d.line && trip.direction === d.direction && trip.plan === d.plan} seconds={d === shown.find((x) => x.ts > now)} onClick={() => onPickTrip({ stop, dep: d })} />)}
       </ul>
     </>
   );
 }
 
-function DepartureCard({ d, now, seconds, onClick }) {
+function DepartureCard({ d, now, seconds, sel, onClick }) {
   const c = countdown(d.ts, now, seconds);
   return (
     <li>
-      <button type="button" className={`card${c.past ? ' gone' : ''}`} onClick={onClick}>
+      <button type="button" className={`card${c.past ? ' gone' : ''}${sel ? ' sel' : ''}`} aria-current={sel || undefined} onClick={onClick}>
         <span className="line">{d.line}</span>
         <span className="what">
           <span className="dir">{d.direction}</span>
