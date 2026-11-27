@@ -430,14 +430,18 @@ async function step(env, owner, trip, st) {
     st.dep = dep;
     if (n < dep - 20) {
       const min = Math.max(1, Math.round((dep - n) / 60));
-      if (trip.countdown && min !== st.lastMin) {
-        const late = hhmm(dep) !== trip.plan ? ` (statt ${trip.plan})` : '';
+      // Neu senden, wenn sich die Minuten ODER die (verspätete) Abfahrtszeit ändern:
+      // bei wachsender Verspätung bleiben die Minuten bis zur Abfahrt oft gleich.
+      if (trip.countdown && (min !== st.lastMin || hhmm(dep) !== st.lastDep)) {
+        const delay = Math.round((Math.floor(dep / 60) * 60 - planTs(trip)) / 60);
+        const late = delay > 0 ? ` · +${delay} min (Plan ${trip.plan})` : hhmm(dep) !== trip.plan ? ` (Plan ${trip.plan})` : '';
         await pushTo(env, [owner], {
           title: `${trip.line} → ${trip.direction} in ${min} min`,
           body: `ab ${short(trip.stopName)} um ${hhmm(dep)}${late}`,
           tag: 'countdown', silent: true, badge: min, ttl: 60,
         });
         st.lastMin = min;
+        st.lastDep = hhmm(dep);
       }
       await save();
       return;
