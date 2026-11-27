@@ -1,13 +1,13 @@
 /* Farben: --acc Akzent (Pastell, Fläche), --acc-ink Akzent für Text/Linien, --late verspätet. */
 :root{
-  --bg:#f6f5f3;--card:#fff;--fg:#1b1a1f;--dim:#6b6a70;--line:#e7e5e1;--late:#c8364b;--rt:#2f7a45;
+  --bg:#f6f5f3;--card:#fff;--fg:#1b1a1f;--dim:#6b6a70;--line:#e7e5e1;--late:#a8545e;--rt:#2f7a45;
   --acc:#a8d8b0;--acc-ink:#2f6b3f;--r:14px;color-scheme:light
 }
 :root[data-accent=red]{--acc:#f4b4b4;--acc-ink:#a33a3a}
 :root[data-accent=green]{--acc:#a8d8b0;--acc-ink:#2f6b3f}
 :root[data-accent=blue]{--acc:#aecbea;--acc-ink:#2c5a8a}
 :root[data-accent=purple]{--acc:#cdbbe8;--acc-ink:#62469a}
-.dark{--bg:#17171a;--card:#232328;--fg:#ececef;--dim:#9b9aa2;--line:#33333a;--late:#ff8a9a;--rt:#8fd6a0;color-scheme:dark}
+.dark{--bg:#17171a;--card:#232328;--fg:#ececef;--dim:#9b9aa2;--line:#33333a;--late:#d9a0a6;--rt:#8fd6a0;color-scheme:dark}
 .dark[data-accent=red]{--acc:#6e3a3e;--acc-ink:#f4b4b4}
 .dark[data-accent=green]{--acc:#2f5238;--acc-ink:#a8d8b0}
 .dark[data-accent=blue]{--acc:#2f4766;--acc-ink:#aecbea}
