@@ -173,8 +173,8 @@ function Journey({ trip, now, onClear, onArrival }) {
       {!route.matched && !arrived && <p className="banner">{shortName(trip.dest.name)} erreichst du nicht mit der gewählten Fahrt ({trip.line} → {trip.direction}, {trip.plan}). Das ist die nächste passende Verbindung.</p>}
       {arrived ? (
         <>
-          <h2 className="sec">Zurück nach {shortName(trip.stopName)}</h2>
-          {rides.slice().reverse().map((l, i) => <ReturnList key={i} from={l.stops.at(-1)} home={trip.stopId} now={now} arr={t(l.stops.at(-1))} />)}
+          <h2 className="sec">{shortName(trip.dest.name)} <Arrow width="14" height="14" /> {shortName(trip.stopName)}</h2>
+          {rides.slice().reverse().map((l, i) => <ReturnList key={i} from={l.stops.at(-1)} title={i > 0} home={trip.stopId} now={now} arr={t(l.stops.at(-1))} />)}
           <button type="button" className="ghost" onClick={() => setShowLegs((x) => !x)}>{showLegs ? 'Verlauf ausblenden' : 'Verlauf anzeigen'}</button>
           {showLegs && <Legs route={route} rides={rides} now={now} />}
         </>
@@ -196,13 +196,14 @@ function Legs({ route, rides, now }) {
 }
 
 // Bahnen zurück ab Ausstiegs- und Umstiegshaltestelle (erst nach der Ankunft am Ziel).
-function ReturnList({ from, home, now, arr }) {
+// Rückfahrten ab Ziel (ohne Überschrift) und ab Umstiegshaltestellen (mit „ab …“).
+function ReturnList({ from, title, home, now, arr }) {
   const [routes, setRoutes] = useState(null);
   usePoll(() => {
     api('/route', { from: from.id, to: home, t: Math.floor(Math.max(arr, Date.now() / 1000)) })
       .then((d) => setRoutes(d.routes)).catch(() => setRoutes((r) => r || []));
   }, [from.id, home], { at: [10], stale: 60 });
-  return <div className="ret"><h3>ab {from.name}</h3><ReturnRows routes={routes} now={now} /></div>;
+  return <div className="ret">{title && <h3>ab {from.name}</h3>}<ReturnRows routes={routes} now={now} /></div>;
 }
 
 function ReturnRows({ routes, now }) {
@@ -237,23 +238,20 @@ function Notify({ trip, setTrip }) {
   const [contacts, setContacts] = useState(null);
   useEffect(() => { if (auth) api('/me').then((d) => setContacts(d.contacts)).catch(() => setContacts([])); }, [auth]);
   if (!auth) return <p className="hint small">Für Benachrichtigungen (Countdown, Kontakte) in den Einstellungen mit Google anmelden.</p>;
+  if (contacts && !contacts.length) return <p className="hint small">Kontakte, die deine Fahrt verfolgen können, fügst du in den Einstellungen hinzu.</p>;
   const invite = trip.invite || [];
   const toggle = (e) => setTrip({ ...trip, invite: invite.includes(e) ? invite.filter((x) => x !== e) : [...invite, e] });
   return (
     <>
-      <h2 className="sec">Benachrichtigungen</h2>
+      <h2 className="sec">Kontakte einladen</h2>
       <div className="box">
-        <label className="switch flat">Countdown bis zur Abfahrt
-          <input type="checkbox" role="switch" checked={trip.countdown !== false} onChange={(e) => setTrip({ ...trip, countdown: e.target.checked })} />
-        </label>
-        {contacts?.length > 0 && <p className="hint">Kontakte bekommen Abfahrt, Verspätung und Ankunft:</p>}
+        <p className="hint">Sie bekommen Abfahrt, Verspätung und Ankunft.</p>
         {contacts?.map((c) => (
           <label key={c.email} className="check">
             <input type="checkbox" checked={invite.includes(c.email)} onChange={() => toggle(c.email)} />
             <span>{c.name || c.email}{!c.devices && <small> · noch keine App</small>}</span>
           </label>
         ))}
-        {contacts && !contacts.length && <p className="hint">Kontakte fügst du in den Einstellungen hinzu.</p>}
       </div>
     </>
   );

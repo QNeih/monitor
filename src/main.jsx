@@ -12,7 +12,7 @@ function App() {
   const [trip, setTripLocal] = useStored('trip', null);
   const [settings, setSettings] = useStored('settings', { accent: 'green', dark: true, v: 2 });
   // Jede Änderung am Sprung auch an den Worker (Benachrichtigungen), wenn angemeldet.
-  const setTripRaw = (next) => setTripLocal((old) => { const n = typeof next === 'function' ? next(old) : next; syncTrip(n); return n; });
+  const setTripRaw = (next) => setTripLocal((old) => { let n = typeof next === 'function' ? next(old) : next; if (n) n = { ...n, countdown: true }; syncTrip(n); return n; });
 
   // v2: dunkles Design ist Standard (auch für Geräte, die die alte Voreinstellung gespeichert haben).
   useEffect(() => { if (settings.v !== 2) setSettings((s) => ({ ...s, dark: true, v: 2 })); }, [settings.v, setSettings]);
