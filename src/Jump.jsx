@@ -48,7 +48,7 @@ export default function Jump({ trip, setTrip, onHome }) {
         {!c.past && <span className="count"><b>{c.text}</b><small>{c.unit}</small></span>}
       </div>
 
-      <StopSearch label="Ziel auswählen" placeholder="Wohin? (auch mit Umstieg)" onPick={(s) => setTrip({ ...trip, dest: { id: s.id, name: s.name } })} />
+      {!trip.dest && <StopSearch label="Ziel auswählen" placeholder="Wohin? (auch mit Umstieg)" onPick={(s) => setTrip({ ...trip, dest: { id: s.id, name: s.name } })} />}
 
       {trip.dest
         ? <Journey key={trip.dest.id} trip={trip} now={now} onClear={() => setTrip({ ...trip, dest: null })} />
