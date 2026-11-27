@@ -170,3 +170,5 @@ input:focus{outline:none;border-color:var(--acc-ink)}
 .fold button{width:100%;text-align:left;padding:6px 12px;color:var(--acc-ink);font-weight:600;font-size:.85rem}
 .req{gap:4px;padding-right:8px}
 .req .link{padding:8px 6px}
+.tripcard .dir{display:flex;align-items:center;gap:6px}
+.tripcard .dir svg{flex:none}

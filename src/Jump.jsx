@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, countdown, day, hhmm, shortName, useAuth, useNow, usePoll } from './lib.js';
 import StopSearch from './StopSearch.jsx';
+import { Arrow } from './icons.jsx';
 
 export const TRIP_TTL = 48 * 3600; // Sprung setzt sich spätestens nach 48 h selbst zurück
 
@@ -28,6 +29,8 @@ const t = (s) => s.rt ?? s.plan;
 
 export default function Jump({ trip, setTrip, onHome }) {
   const now = useNow();
+  const [arrival, setArrival] = useState(null); // Ankunft am Ziel (aus der Verbindung), für die Kopfkarte
+  useEffect(() => setArrival(null), [trip?.dest?.id]);
   if (!trip) {
     return (
       <section className="page empty">
@@ -37,14 +40,18 @@ export default function Jump({ trip, setTrip, onHome }) {
       </section>
     );
   }
-  const c = countdown(trip.ts, now);
+  const dep = arrival?.dep || trip.ts; // Echtzeit-Abfahrt aus der Verbindung, sobald bekannt
+  const c = countdown(dep, now);
   return (
     <section className="page">
       <div className="tripcard">
         <span className="line">{trip.line}</span>
         <span className="what">
-          <span className="dir">{trip.direction}</span>
-          <span className="sub">ab {shortName(trip.stopName)} · {hhmm(trip.ts)}{hhmm(trip.ts) !== trip.plan && <s> {trip.plan}</s>}</span>
+          <span className="dir"><Arrow width="16" height="16" />{trip.direction}</span>
+          <span className="sub">ab {shortName(trip.stopName)} · {hhmm(dep)}{hhmm(dep) !== trip.plan && <s> {trip.plan}</s>}</span>
+          {trip.dest && arrival && (
+            <span className="sub">an {shortName(trip.dest.name)} · {hhmm(t(arrival))}{arrival.rt && hhmm(arrival.rt) !== hhmm(arrival.plan) && <s> {hhmm(arrival.plan)}</s>}</span>
+          )}
         </span>
         {!c.past && <span className="count"><small>in</small><b>{c.text}</b><small>{c.unit}</small></span>}
       </div>
@@ -52,7 +59,7 @@ export default function Jump({ trip, setTrip, onHome }) {
       {!trip.dest && <StopSearch label="Ziel auswählen" placeholder="Wohin? (auch mit Umstieg)" onPick={(s) => setTrip({ ...trip, dest: { id: s.id, name: s.name } })} />}
 
       {trip.dest
-        ? <Journey key={trip.dest.id} trip={trip} now={now} onClear={() => setTrip({ ...trip, dest: null })} />
+        ? <Journey key={trip.dest.id} trip={trip} now={now} onArrival={setArrival} onClear={() => setTrip({ ...trip, dest: null })} />
         : <TripStops trip={trip} now={now} onPick={(s) => setTrip({ ...trip, dest: { id: s.id, name: s.name } })} />}
 
       <Notify trip={trip} setTrip={setTrip} />
@@ -133,7 +140,7 @@ function StopRow({ s, onClick, mark, passed }) {
   );
 }
 
-function Journey({ trip, now, onClear }) {
+function Journey({ trip, now, onClear, onArrival }) {
   const [route, setRoute] = useState(null);
   const [showLegs, setShowLegs] = useState(false);
   const [err, setErr] = useState('');
@@ -146,6 +153,10 @@ function Journey({ trip, now, onClear }) {
       })
       .catch((e) => setErr(e.message));
   }, [trip.stopId, trip.dest.id, trip.plan], { at: [5, 35] });
+
+  const ridesAll = route?.legs.filter((l) => l.type === 'ride');
+  const end = ridesAll?.at(-1)?.stops.at(-1), start = route?.matched ? ridesAll[0].stops[0] : null;
+  useEffect(() => { onArrival(end ? { plan: end.plan, rt: end.rt, dep: start ? t(start) : null } : null); }, [end?.plan, end?.rt, start && t(start)]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (err && !route) return <p className="banner">Keine Verbindung gefunden ({err}).</p>;
   if (!route) return <p className="hint pad">Suche Verbindung nach {shortName(trip.dest.name)} …</p>;
