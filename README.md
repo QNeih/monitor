@@ -1,4 +1,6 @@
-# Monitor
+# Katzensprung
+
+(Repo und Worker heißen weiter `monitor`; die Adresse bleibt https://qneih.github.io/monitor/.)
 
 PWA für Live-Abfahrten im KVB-Netz (Köln). React + Vite, deployt über GitHub Pages (jeder Push auf `main`).
 

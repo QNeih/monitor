@@ -1,6 +1,6 @@
 // Offline-Fallback für die App-Shell und Empfang der Push-Nachrichten.
 // App-Dateien: immer zuerst das Netz (am HTTP-Cache vorbei), Cache nur ohne Netz. Abfahrten (Worker) werden nie gecacht.
-const CACHE = 'monitor-v25';
+const CACHE = 'monitor-v26';
 self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', 'index.html'])).then(() => self.skipWaiting())));
 self.addEventListener('activate', (e) => e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', (e) => {
@@ -16,7 +16,7 @@ self.addEventListener('fetch', (e) => {
 // Der Countdown kommt jede Minute mit demselben tag und ersetzt die vorige Nachricht still.
 self.addEventListener('push', (e) => {
   let m = {};
-  try { m = e.data.json(); } catch { m = { title: 'Monitor', body: e.data && e.data.text() }; }
+  try { m = e.data.json(); } catch { m = { title: 'Katzensprung', body: e.data && e.data.text() }; }
   e.waitUntil((async () => {
     if (m.close) {
       for (const n of await self.registration.getNotifications({ tag: m.close })) n.close();
@@ -27,7 +27,7 @@ self.addEventListener('push', (e) => {
       if (m.badge) await navigator.setAppBadge(m.badge).catch(() => {});
       else await navigator.clearAppBadge().catch(() => {});
     }
-    await self.registration.showNotification(m.title || 'Monitor', {
+    await self.registration.showNotification(m.title && m.title !== 'Monitor' ? m.title : 'Katzensprung', {
       body: m.body || '',
       tag: m.tag,
       renotify: !m.silent,
@@ -48,7 +48,7 @@ self.addEventListener('notificationclick', (e) => {
   if (act && (e.action === 'accept' || e.action === 'decline')) {
     e.waitUntil(fetch(`${API}/contacts/act`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: act, action: e.action }) })
       .then((r) => { if (!r.ok) throw new Error(r.status); })
-      .catch(() => self.registration.showNotification('Monitor', { body: 'Das hat nicht geklappt. Öffne die Einstellungen, um die Anfrage zu beantworten.', icon: 'icons/notify-192.png', badge: 'icons/badge-96.png', data: { url: '?tab=settings' } })));
+      .catch(() => self.registration.showNotification('Katzensprung', { body: 'Das hat nicht geklappt. Öffne die Einstellungen, um die Anfrage zu beantworten.', icon: 'icons/notify-192.png', badge: 'icons/badge-96.png', data: { url: '?tab=settings' } })));
     return;
   }
   const url = new URL(e.notification.data?.url || './', self.registration.scope).href;

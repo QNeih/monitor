@@ -1,4 +1,4 @@
-// Cloudflare Worker für die Monitor-App: liest die offene VRS-Fahrplanauskunft und gibt JSON mit CORS-Freigabe zurück,
+// Cloudflare Worker für die App Katzensprung (Repo monitor): liest die offene VRS-Fahrplanauskunft und gibt JSON mit CORS-Freigabe zurück,
 // verwaltet Konten (Google-Login), Kontakte und Push-Abos und schickt per Cron jede Minute die Reise-Benachrichtigungen.
 //
 // Fahrplan (offen):
@@ -397,7 +397,7 @@ async function delSub(env, email, { endpoint }) {
   return json({ ok: true });
 }
 async function testPush(env, email) {
-  const n = await pushTo(env, [email], { title: 'Monitor', body: 'Benachrichtigungen funktionieren.', tag: 'test' });
+  const n = await pushTo(env, [email], { title: 'Katzensprung', body: 'Benachrichtigungen funktionieren.', tag: 'test' });
   return json({ sent: n });
 }
 
