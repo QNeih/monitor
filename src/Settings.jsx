@@ -13,7 +13,15 @@ export default function Settings({ settings, setSettings }) {
   const auth = useAuth();
   return (
     <section className="page">
-      <h1>Einstellungen</h1>
+      <div className="head">
+        <h1>Einstellungen</h1>
+        {auth && (
+          <span className="me">
+            {auth.user.picture && <img src={auth.user.picture} alt={auth.user.name} title={auth.user.email} referrerPolicy="no-referrer" />}
+            <button type="button" className="link" onClick={() => { disablePush().catch(() => {}); setAuth(null); }}>Abmelden</button>
+          </span>
+        )}
+      </div>
 
       <h2 className="sec">Akzentfarbe</h2>
       <div className="swatches" role="radiogroup" aria-label="Akzentfarbe">
@@ -30,8 +38,7 @@ export default function Settings({ settings, setSettings }) {
         <input type="checkbox" role="switch" checked={!!settings.dark} onChange={(e) => set('dark', e.target.checked)} />
       </label>
 
-      <h2 className="sec">Konto</h2>
-      {auth ? <Account auth={auth} /> : <GoogleLogin />}
+      {auth ? <Account /> : <><h2 className="sec">Konto</h2><GoogleLogin /></>}
 
       <p className="hint small">Daten: VRS-Fahrplanauskunft (inoffiziell, über monitor.qneih.workers.dev). Haltestellen und Einstellungen liegen nur auf diesem Gerät; Konto, Kontakte und der laufende Sprung beim Worker.</p>
     </section>
@@ -75,7 +82,7 @@ function GoogleLogin() {
   );
 }
 
-function Account({ auth }) {
+function Account() {
   const [me, setMe] = useState(null);
   const [push, setPush] = useState('…');
   const [email, setEmail] = useState('');
@@ -101,12 +108,6 @@ function Account({ auth }) {
 
   return (
     <>
-      <div className="box account">
-        {auth.user.picture && <img src={auth.user.picture} alt="" referrerPolicy="no-referrer" />}
-        <span className="grow"><b>{auth.user.name}</b><small>{auth.user.email}</small></span>
-        <button type="button" className="link" onClick={() => { disablePush().catch(() => {}); setAuth(null); }}>Abmelden</button>
-      </div>
-
       <h2 className="sec">Benachrichtigungen</h2>
       <div className="box">
         <label className="switch flat">Auf diesem Gerät

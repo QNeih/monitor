@@ -137,3 +137,9 @@ input:focus{outline:none;border-color:var(--acc-ink)}
 .addrow{display:flex;gap:8px;margin-top:8px}
 .addrow input{flex:1;min-width:0}
 .primary.small{width:auto;flex:none;padding:10px 14px}
+/* Kopf Einstellungen: angemeldet → Bild + Abmelden oben rechts */
+.head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.me{display:flex;align-items:center;gap:4px}
+.me img{width:32px;height:32px;border-radius:50%}
+/* Google-Knopf (iframe) ohne weißen Rand im dunklen Design */
+.gsi{color-scheme:light}
