@@ -1,14 +1,36 @@
 # Monitor
 
-Minimalistische PWA für Live-Abfahrten im KVB-Netz (Köln). Ein Tab pro Haltestelle, darin ein VRS-Abfahrtsmonitor, gefiltert auf Linie und Richtung. Vorbelegt: Grünstr. (4 → Schlebusch) und Mülheim Berliner Str. (4 → Bocklemünd), je 4 Abfahrten. Mit + weitere hinzufügen (VRS-Monitor-Link oder ungefilterte KVB-Tafel), mit × entfernen.
+PWA für Live-Abfahrten im KVB-Netz (Köln). React + Vite, deployt über GitHub Pages (jeder Push auf `main`).
 
-- Reines HTML/CSS/JS, kein Build.
-- Haltestellen liegen im `localStorage` (Standard in `config.js`, `DEFAULT_STOPS`).
-- Filter ändern (Richtung, Anzahl, Farben): privaten Admin-Link des Monitors öffnen (bewusst nicht im Repo); der Anzeige-Link bleibt gleich. Neuer Monitor: vrs.de/fahrplanauskunft/abfahrtsmonitor.
-- Service Worker cacht nur die App-Shell, nie Abfahrten.
-- Datenquelle: VRS-Abfahrtsmonitor (`vrs.de/am/s/<id>`) als iframe, von der App zu jeder Minute :01 und :31 neu geladen (die Tafel selbst tut es im iframe nicht: ihr Skript bricht beim Zugriff auf `window.parent` ab). Fallback ohne Monitor: KVB-Fahrplanauskunft `auskunft.kvb.koeln` (nur Stadtbahn, 5 Abfahrten, kein Richtungsfilter).
-- Warum keine API: `v6.db.transport.rest` ist abgeschaltet (Stand 11/2026), die VRS-Abfahrten (`ekap-web.vrs.de`) verlangen ein Token und senden kein CORS. Die VRS-Haltestellensuche ist offen.
+## Tabs
 
-## Deploy
+- **Haltestelle** (Katze mit Dach): eigene Haltestellen in Köln, anfangs leer, im Gerät gespeichert. Daneben der Richtungsumschalter (nach Gleis: Alle → Gleis 1 → Gleis 2 …). Abfahrten als Karten: Echtzeit groß, bei Verspätung die Fahrplanzeit durchgestrichen, Countdown in Minuten und Sekunden. Tippen wählt die Fahrt.
+- **Sprung** (springende Katze): Haltestellen der gewählten Fahrt. Ziel antippen oder frei eingeben („Ziel auswählen“, auch mit Umstieg). Bei Ankunft an Umstiegs- und Ausstiegshaltestelle erscheinen die Bahnen zurück zur Starthaltestelle. Setzt sich nach spätestens 48 h selbst zurück.
+- **Einstellungen** (Katze mit Zahnrad): Akzentfarbe (Pastell: Rot, Grün, Blau, Lila), dunkles Design. Google-Login und Kontakte folgen.
 
-GitHub → Settings → Pages → Source: **GitHub Actions**. Jeder Push auf `main` veröffentlicht die Seite.
+## Daten
+
+Alles über den Cloudflare Worker `https://monitor.qneih.workers.dev` (Quelle: `worker/worker.js`), der die offene, aber undokumentierte VRS-Fahrplanauskunft liest und mit CORS weitergibt:
+
+| Endpunkt | Quelle |
+| --- | --- |
+| `/stops?q=…&koeln=1` | VRS-Haltestellensuche (`ekap-web.vrs.de`, `tx_vrsinfo_ass2_objects`) |
+| `/departures?stop=<IFOPT>` | Abfahrtsmonitor der VRS-Haltestellenseite (`/his/haltestelle/<IFOPT>`, Monitor-ID 30 Tage gecacht); 10 Abfahrten, alle Richtungen |
+| `/route?from=&to=&t=` | HTML der VRS-Verbindungsauskunft mit Zwischenhalten und Echtzeit, im Worker zu JSON geparst |
+| `/?i=<ID>` | alt: die zwei festen Monitore der Vorversion |
+
+Jede Antwort enthält `now` (Serverzeit), damit die App eine falsch gehende Handyuhr ausgleicht. Der Worker nimmt nur VRS-Haltestellen-IDs an (kein offener Proxy).
+
+Bekannte Eigenheiten: VRS liefert abwechselnd zwei leicht verschiedene Datenstände; die App lässt eine einmal gesehene Echtzeit nicht wieder verschwinden. Ändert VRS sein HTML, bricht `/route` (Parser in `parseRoutes`).
+
+Worker deployen: Inhalt von `worker/worker.js` als Modul-Worker `monitor` hochladen (Cloudflare-Dashboard, Wrangler oder API).
+
+## Entwicklung
+
+```
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # nach dist/
+```
+
+Service Worker (`public/sw.js`): immer zuerst Netz, Cache nur offline; Abfahrten nie.
