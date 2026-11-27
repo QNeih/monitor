@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, countdown, day, hhmm, shortName, useAuth, useNow, usePoll } from './lib.js';
 import StopSearch from './StopSearch.jsx';
-import { Arrow } from './icons.jsx';
+import { Arrow, Undo } from './icons.jsx';
 
 export const TRIP_TTL = 48 * 3600; // Sprung setzt sich spätestens nach 48 h selbst zurück
 
@@ -168,7 +168,7 @@ function Journey({ trip, now, onClear, onArrival }) {
     <>
       <div className="dest">
         <span>Ziel <b>{shortName(trip.dest.name)}</b> · {arrived ? 'angekommen' : 'an'} {hhmm(t(arrival))}{rides.length > 1 && ` · ${rides.length - 1}× umsteigen`}</span>
-        <button type="button" className="x" onClick={onClear} aria-label="Ziel entfernen">✕</button>
+        <button type="button" className="x" onClick={onClear} aria-label="Ziel zurücknehmen" title="Ziel zurücknehmen"><Undo /></button>
       </div>
       {!route.matched && !arrived && <p className="banner">{shortName(trip.dest.name)} erreichst du nicht mit der gewählten Fahrt ({trip.line} → {trip.direction}, {trip.plan}). Das ist die nächste passende Verbindung.</p>}
       {arrived ? (
