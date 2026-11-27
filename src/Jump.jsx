@@ -50,7 +50,7 @@ export default function Jump({ trip, setTrip, onHome }) {
           <span className="dir"><Arrow width="16" height="16" />{trip.direction}</span>
           <span className="sub">ab {shortName(trip.stopName)} · {hhmm(dep)}{hhmm(dep) !== trip.plan && <s> {trip.plan}</s>}</span>
           {trip.dest && arrival && (
-            <span className="sub">bis {shortName(trip.dest.name)} · {hhmm(t(arrival))}{arrival.rt && hhmm(arrival.rt) !== hhmm(arrival.plan) && <s> {hhmm(arrival.plan)}</s>}</span>
+            <span className="sub">an {shortName(trip.dest.name)} · {hhmm(t(arrival))}{arrival.rt && hhmm(arrival.rt) !== hhmm(arrival.plan) && <s> {hhmm(arrival.plan)}</s>}</span>
           )}
         </span>
         {!c.past && <span className="count"><small>in</small><b>{c.text}</b><small>{c.unit}</small></span>}

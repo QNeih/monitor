@@ -39,8 +39,6 @@ export default function Settings({ settings, setSettings }) {
       </label>
 
       {auth ? <Account /> : <><h2 className="sec">Konto</h2><GoogleLogin /></>}
-
-      <p className="hint small">Daten: VRS-Fahrplanauskunft (inoffiziell, über monitor.qneih.workers.dev). Haltestellen und Einstellungen liegen nur auf diesem Gerät; Konto, Kontakte und der laufende Sprung beim Worker.</p>
     </section>
   );
 }
