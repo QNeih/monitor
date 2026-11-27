@@ -12,15 +12,16 @@ export function planTs(trip) {
   if (diff < -720) diff += 1440;
   return Math.floor(trip.ts / 60) * 60 - diff * 60;
 }
+// Suchzeit für Verbindungen: etwas vor Plan/Echtzeit, sonst fehlt die Fahrt, wenn sie früh abfährt.
+const searchTs = (trip) => Math.min(planTs(trip), trip.ts) - 300;
 
 // Die Verbindung, die mit der gewählten Fahrt beginnt (gleiche Linie, Haltestelle, Fahrplanzeit).
 function match(routes, trip) {
   const first = (r) => r.legs.find((l) => l.type === 'ride');
-  const ok = (r, strict) => {
+  return routes.find((r) => {
     const l = first(r);
-    return l && l.line === trip.line && l.stops[0]?.id === trip.stopId && (!strict || hhmm(l.stops[0].plan) === trip.plan);
-  };
-  return routes.find((r) => ok(r, true)) || routes.find((r) => ok(r, false)) || null;
+    return l && l.line === trip.line && l.stops[0]?.id === trip.stopId && hhmm(l.stops[0].plan) === trip.plan;
+  }) || null;
 }
 
 const t = (s) => s.rt ?? s.plan;
@@ -70,7 +71,7 @@ function TripStops({ trip, now, onPick }) {
     try {
       const term = (await api('/stops', { q: trip.direction })).stops[0];
       if (!term) throw new Error('Endhaltestelle unbekannt');
-      const d = await api('/route', { from: trip.stopId, to: term.id, t: planTs(trip) });
+      const d = await api('/route', { from: trip.stopId, to: term.id, t: searchTs(trip) });
       const r = match(d.routes, trip);
       const l = r && r.legs.find((x) => x.type === 'ride');
       if (!l) throw new Error('Fahrt nicht gefunden');
@@ -83,20 +84,44 @@ function TripStops({ trip, now, onPick }) {
   return (
     <>
       <h2 className="sec">Haltestellen – tippe dein Ziel</h2>
-      <ol className="stops">
-        {leg.stops.slice(1).map((s) => <StopRow key={s.id + s.plan} s={s} now={now} onClick={() => onPick(s)} />)}
-      </ol>
+      <StopList stops={leg.stops} now={now} onPick={(s, i) => i > 0 && onPick(s)} mark={(i) => (i === 0 ? 'Start' : null)} />
     </>
   );
 }
 
-function StopRow({ s, now, onClick, mark }) {
-  const passed = t(s) < now - 30;
+// Haltestellen als Stepper: bereits befahrene oben gestapelt (antippen zum Aufklappen), danach die folgenden.
+function StopList({ stops, now, onPick, mark }) {
+  const [open, setOpen] = useState(false);
+  const passed = (s) => t(s) < now - 30;
+  let n = 0;
+  while (n < stops.length - 1 && passed(stops[n])) n++; // letzte Haltestelle nie wegklappen
+  const row = (s, i) => (
+    <StopRow key={s.id + s.plan} s={s} now={now} passed={i < n} mark={mark?.(i)}
+      onClick={onPick && i >= n && i > 0 ? () => onPick(s, i) : undefined} />
+  );
+  return (
+    <ol className="stepper">
+      {n > 0 && (open
+        ? <>{stops.slice(0, n).map(row)}<li className="fold"><button type="button" onClick={() => setOpen(false)}>Gefahrene Haltestellen einklappen</button></li></>
+        : (
+          <li className="stack">
+            <i />{n > 1 && <i />}
+            <button type="button" onClick={() => setOpen(true)} aria-expanded="false">
+              <span><b>{n}</b> {n === 1 ? 'Haltestelle' : 'Haltestellen'} gefahren · bis {stops[n - 1].name}</span>
+            </button>
+          </li>
+        ))}
+      {stops.slice(n).map((s, j) => row(s, n + j))}
+    </ol>
+  );
+}
+
+function StopRow({ s, onClick, mark, passed }) {
   const late = s.rt && hhmm(s.rt) !== hhmm(s.plan);
   const Tag = onClick ? 'button' : 'div';
   return (
-    <li className={`${passed ? 'passed' : ''} ${mark ? 'mark' : ''}`}>
-      <Tag type={onClick ? 'button' : undefined} className="stoprow" onClick={onClick}>
+    <li className={`step${passed ? ' passed' : ''}${mark ? ' mark' : ''}`}>
+      <Tag type={onClick ? 'button' : undefined} className="stoprow" onClick={onClick} disabled={passed || undefined}>
         <span className="tm"><b className={late ? 'late' : s.rt ? 'rt' : ''}>{hhmm(t(s))}</b>{late && <s>{hhmm(s.plan)}</s>}</span>
         <span className="nm">{s.name}{s.platform && <small> · Gleis {s.platform}</small>}</span>
         {mark && <span className="tag">{mark}</span>}
@@ -110,9 +135,9 @@ function Journey({ trip, now, onClear }) {
   const [showLegs, setShowLegs] = useState(false);
   const [err, setErr] = useState('');
   usePoll(() => {
-    api('/route', { from: trip.stopId, to: trip.dest.id, t: planTs(trip) })
+    api('/route', { from: trip.stopId, to: trip.dest.id, t: searchTs(trip) })
       .then((d) => {
-        const m = match(d.routes, trip), r = m || d.routes[0];
+        const m = match(d.routes, trip), r = m || d.routes.find((x) => t(x.legs.find((l) => l.type === 'ride').stops[0]) >= trip.ts - 60) || d.routes[0];
         if (!r) throw new Error('keine Verbindung');
         setRoute({ ...r, matched: !!m }); setErr('');
       })
@@ -150,12 +175,8 @@ function Legs({ route, rides, now }) {
     : (
       <div key={i} className="leg">
         <h2 className="sec"><span className="line sm">{l.line}</span> {l.direction}</h2>
-        <ol className="stops">
-          {l.stops.map((s, j) => (
-            <StopRow key={s.id + s.plan} s={s} now={now}
-              mark={j === 0 ? (i === 0 ? 'Start' : 'Einstieg') : j === l.stops.length - 1 ? (l === rides.at(-1) ? 'Ausstieg' : 'Umstieg') : null} />
-          ))}
-        </ol>
+        <StopList stops={l.stops} now={now}
+          mark={(j) => (j === 0 ? (i === 0 ? 'Start' : 'Einstieg') : j === l.stops.length - 1 ? (l === rides.at(-1) ? 'Ausstieg' : 'Umstieg') : null)} />
       </div>
     ));
 }

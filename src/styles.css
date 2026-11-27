@@ -143,3 +143,28 @@ input:focus{outline:none;border-color:var(--acc-ink)}
 .me img{width:32px;height:32px;border-radius:50%}
 /* Google-Knopf (iframe) ohne weißen Rand im dunklen Design */
 .gsi{color-scheme:light}
+
+/* Stepper (Sprung): Karten mit Akzent-Rand links, verbunden durch eine Linie mit Punkten */
+.stepper{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.stepper>li{position:relative;padding-left:24px}
+.stepper>li::before{content:"";position:absolute;left:8px;top:0;bottom:-4px;width:2px;background:var(--acc)}
+.stepper>li:first-child::before{top:50%}
+.stepper>li:last-child::before{bottom:50%}
+.stepper>li:only-child::before{display:none}
+.stepper>li::after{content:"";position:absolute;left:4px;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:var(--acc-ink);box-shadow:0 0 0 3px var(--bg)}
+.stepper>li.passed::after,.stepper>li.stack::after,.stepper>li.fold::after{background:var(--bg);border:2px solid var(--dim)}
+.stepper>li.mark::after{width:14px;height:14px;margin-top:-7px;left:2px}
+.stepper .stoprow{background:var(--card);border-radius:10px;border-left:3px solid var(--acc);padding:8px 12px}
+.stepper .stoprow:disabled{opacity:1;cursor:default}
+.stepper li.passed .stoprow{opacity:.5;border-left-color:var(--line)}
+.stepper li.mark .nm{font-weight:600}
+/* gefahrene Haltestellen: zugeklappt als Kartenstapel */
+.stack{padding-bottom:8px}
+.stack::after{top:calc(50% - 4px)!important}
+.stack button{position:relative;z-index:1;width:100%;text-align:left;background:var(--card);border-radius:10px;border-left:3px solid var(--line);padding:10px 12px;color:var(--dim);font-size:.9rem}
+.stack button b{color:var(--fg)}
+.stack{padding-bottom:10px}
+.stack i{position:absolute;z-index:0;left:30px;right:6px;bottom:5px;top:5px;border-radius:10px;background:color-mix(in srgb,var(--card) 70%,var(--dim));opacity:.55}
+.stack i+i{left:36px;right:12px;bottom:0;top:10px;opacity:.3}
+.stepper>li.fold::after{display:none}
+.fold button{width:100%;text-align:left;padding:6px 12px;color:var(--acc-ink);font-weight:600;font-size:.85rem}

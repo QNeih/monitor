@@ -456,9 +456,11 @@ async function step(env, owner, trip, st) {
   }
 
   // 2. Unterwegs: Verbindung zum Ziel (Echtzeit an jedem Halt)
-  const routes = await route(trip.stopId, trip.dest.id, planTs(trip), false);
+  // 5 min früher suchen: der VRS lässt Fahrten weg, die vor der Suchzeit abgefahren sind.
+  const routes = await route(trip.stopId, trip.dest.id, Math.min(planTs(trip), st.dep || trip.ts) - 300, false);
   const first = (r) => r.legs.find((l) => l.type === 'ride');
-  const r = routes.find((x) => { const l = first(x); return l && l.line === trip.line && l.stops[0]?.id === trip.stopId && hhmm(l.stops[0].plan) === trip.plan; }) || routes[0];
+  const r = routes.find((x) => { const l = first(x); return l && l.line === trip.line && l.stops[0]?.id === trip.stopId && hhmm(l.stops[0].plan) === trip.plan; })
+    || routes.find((x) => { const l = first(x); return l && t(l.stops[0]) >= trip.ts - 60; }) || routes[0];
   if (!r) { await save(); return; }
   const rides = r.legs.filter((l) => l.type === 'ride');
   const end = rides.at(-1).stops.at(-1);
