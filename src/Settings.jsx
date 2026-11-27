@@ -119,7 +119,7 @@ function Account() {
         </label>
         {push === 'denied' && <p className="hint">In den Systemeinstellungen blockiert.</p>}
         {push === 'unsupported' && <p className="hint">Nicht verfügbar. Auf dem iPhone: Teilen → „Zum Home-Bildschirm“, dann aus der installierten App aktivieren.</p>}
-        <p className="hint">Countdown bis zur Abfahrt (jede Minute), Umstieg, gleich aussteigen, Ankunft mit Bahn zurück. Kontakte erfahren Abfahrt, Verspätung und Ankunft.</p>
+        <p className="hint">Countdown bis zur Abfahrt (jede Minute), „nächster Halt“ vor Umstieg und Ausstieg, Ankunft mit Bahn zurück. Kontakte erfahren Abfahrt, Verspätung und Ankunft.</p>
         {push === 'on' && <button type="button" className="ghost" onClick={test}>Test-Benachrichtigung</button>}
       </div>
 

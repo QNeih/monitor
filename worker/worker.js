@@ -531,13 +531,15 @@ async function step(env, owner, trip, st) {
   }
 
   // Umstiege
+  // „Nächster Halt“: sobald die Bahn die Haltestelle davor erreicht hat (spätestens 1 min vor Ankunft).
+  const nextStop = (stops) => { const prev = stops.at(-2); return (prev && n >= t(prev)) || n >= t(stops.at(-1)) - 60; };
   st.transfers = st.transfers || {};
   for (let i = 0; i < rides.length - 1; i++) {
     const at = rides[i].stops.at(-1), next = rides[i + 1], from = next.stops[0];
     const key = `${at.id}|${i}`;
-    if (!st.transfers[key] && n >= t(at) - 60) {
+    if (!st.transfers[key] && nextStop(rides[i].stops)) {
       await pushTo(env, [owner], {
-        title: `Umsteigen: ${at.name}`,
+        title: `Nächster Halt: ${at.name} – umsteigen`,
         body: `${next.line} → ${next.direction} um ${hhmm(t(from))}${from.platform ? `, Gleis ${from.platform}` : ''}`,
         tag: 'transfer',
       });
@@ -546,8 +548,8 @@ async function step(env, owner, trip, st) {
   }
 
   // Gleich aussteigen
-  if (!st.soon && n >= arr - 120 && n < arr) {
-    await pushTo(env, [owner], { title: `Gleich aussteigen: ${end.name}`, body: `Ankunft ${hhmm(arr)}`, tag: 'soon' });
+  if (!st.soon && nextStop(rides.at(-1).stops) && n < arr) {
+    await pushTo(env, [owner], { title: `Nächster Halt: ${end.name} – aussteigen`, body: `Ankunft ${hhmm(arr)}`, tag: 'soon' });
     st.soon = true;
   }
 
