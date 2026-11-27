@@ -28,6 +28,7 @@ Alles über den Cloudflare Worker `https://monitor.qneih.workers.dev` (Quelle: `
 | `/route?from=&to=&t=` | HTML der VRS-Verbindungsauskunft mit Zwischenhalten und Echtzeit, im Worker zu JSON geparst |
 | `/?i=<ID>` | alt: die zwei festen Monitore der Vorversion |
 | `/auth/google`, `/me`, `/contacts`, `/push`, `/trip` | Konto (Google-ID-Token → Sitzungstoken), Kontakte, Push-Abos, laufender Sprung; D1-Datenbank `monitor` |
+| `/contacts/accept`, `/contacts/decline`, `/contacts/act` | Kontaktanfragen beantworten (in der App oder per Knopf in der Benachrichtigung). Kontakte gelten erst, wenn beide Seiten bestätigt haben |
 | `POST /tick` | Cron-Schritt sofort ausführen (Test) |
 
 Jede Antwort enthält `now` (Serverzeit), damit die App eine falsch gehende Handyuhr ausgleicht. Der Worker nimmt nur VRS-Haltestellen-IDs an (kein offener Proxy).

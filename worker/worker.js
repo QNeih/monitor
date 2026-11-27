@@ -10,7 +10,11 @@
 // Konto (Authorization: Bearer <Sitzungstoken>):
 //   POST /auth/google {credential}         Google-ID-Token prüfen → Sitzungstoken (180 Tage)
 //   GET  /me                               Konto, Kontakte, VAPID-Schlüssel
-//   POST /contacts {email} · DELETE /contacts?email=
+//   POST /contacts {email}                 Kontaktanfrage (Push an die Person); besteht die Gegenanfrage, sofort bestätigt
+//   POST /contacts/accept {email} · POST /contacts/decline {email}   Anfrage annehmen/ablehnen
+//   POST /contacts/act {t, action}         dasselbe aus dem Knopf in der Benachrichtigung (signiertes Einmal-Token statt Sitzung)
+//   DELETE /contacts?email=                Kontakt oder Anfrage löschen (beide Richtungen)
+// Kontakte: Zeile (owner, email) = owner hat email angefragt. Bestätigt = beide Richtungen vorhanden.
 //   POST /push {subscription} · DELETE /push {endpoint} · POST /push/test
 //   GET|PUT|DELETE /trip                   laufender Sprung (für die Benachrichtigungen)
 //   POST /tick                             Cron-Schritt sofort ausführen (zum Testen; arbeitet nur gespeicherte Reisen ab)
@@ -51,6 +55,9 @@ export default {
         case 'POST /auth/google': return await authGoogle(env, await body(request));
         case 'GET /me': return await me(env, await user(env, request));
         case 'POST /contacts': return await addContact(env, await user(env, request), await body(request));
+        case 'POST /contacts/accept': return await acceptContact(env, await user(env, request), (await body(request)).email);
+        case 'POST /contacts/decline': return await declineContact(env, await user(env, request), (await body(request)).email);
+        case 'POST /contacts/act': return await actContact(env, await body(request));
         case 'DELETE /contacts': return await delContact(env, await user(env, request), q.get('email') || '');
         case 'POST /push': return await addSub(env, await user(env, request), await body(request));
         case 'DELETE /push': return await delSub(env, await user(env, request), await body(request));
@@ -316,24 +323,67 @@ async function user(env, request) {
 
 async function me(env, email) {
   const u = await env.DB.prepare('SELECT email, name, picture FROM users WHERE email = ?').bind(email).first();
-  const contacts = (await env.DB.prepare(
-    'SELECT c.email, u.name, (SELECT COUNT(*) FROM subs s WHERE s.email = c.email) AS devices FROM contacts c LEFT JOIN users u ON u.email = c.email WHERE c.owner = ? ORDER BY c.email',
-  ).bind(email).all()).results;
+  const all = (k) => env.DB.prepare(k).bind(email).all().then((r) => r.results);
+  // bestätigt: beide Richtungen; ausgehend: nur ich → sie; eingehend: nur sie → ich
+  const contacts = await all('SELECT c.email, u.name, (SELECT COUNT(*) FROM subs s WHERE s.email = c.email) AS devices FROM contacts c JOIN contacts r ON r.owner = c.email AND r.email = c.owner LEFT JOIN users u ON u.email = c.email WHERE c.owner = ? ORDER BY c.email');
+  const outgoing = await all('SELECT c.email, u.name, (SELECT COUNT(*) FROM subs s WHERE s.email = c.email) AS devices FROM contacts c LEFT JOIN users u ON u.email = c.email WHERE c.owner = ? AND NOT EXISTS (SELECT 1 FROM contacts r WHERE r.owner = c.email AND r.email = c.owner) ORDER BY c.email');
+  const incoming = await all('SELECT c.owner AS email, u.name FROM contacts c LEFT JOIN users u ON u.email = c.owner WHERE c.email = ? AND NOT EXISTS (SELECT 1 FROM contacts r WHERE r.owner = c.email AND r.email = c.owner) ORDER BY c.owner');
   const devices = (await env.DB.prepare('SELECT COUNT(*) AS n FROM subs WHERE email = ?').bind(email).first()).n;
-  return json({ user: u, contacts, devices, vapid: env.VAPID_PUBLIC });
+  return json({ user: u, contacts, outgoing, incoming, devices, vapid: env.VAPID_PUBLIC });
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const firstName = async (env, email) => (await env.DB.prepare('SELECT name FROM users WHERE email = ?').bind(email).first())?.name?.split(' ')[0] || email;
+const linked = async (env, a, b) => !!(await env.DB.prepare('SELECT 1 FROM contacts WHERE owner = ? AND email = ?').bind(a, b).first());
+// Einmal-Token für die Knöpfe in der Anfrage-Benachrichtigung; eigener Schlüssel, damit es nie als Sitzung gilt.
+const actKey = (env) => `${env.SESSION_SECRET}:contact-request`;
+
 async function addContact(env, owner, { email }) {
   email = String(email || '').trim().toLowerCase();
   if (!EMAIL.test(email) || email === owner) throw new HttpError(400, 'bad email');
   const n = (await env.DB.prepare('SELECT COUNT(*) AS n FROM contacts WHERE owner = ?').bind(owner).first()).n;
   if (n >= 50) throw new HttpError(400, 'too many contacts');
-  await env.DB.prepare('INSERT OR IGNORE INTO contacts(owner, email) VALUES (?, ?)').bind(owner, email).run();
+  const r = await env.DB.prepare('INSERT OR IGNORE INTO contacts(owner, email) VALUES (?, ?)').bind(owner, email).run();
+  const name = await firstName(env, owner);
+  if (await linked(env, email, owner)) {
+    // Gegenanfrage lag schon vor → jetzt bestätigt
+    if (r.meta.changes) await pushTo(env, [email], { title: `${name} ist jetzt dein Kontakt`, body: 'Ihr könnt euch gegenseitig zu Fahrten einladen.', tag: `contact-${owner}`, url: '?tab=settings' });
+  } else if (r.meta.changes) {
+    const payload = b64u(enc.encode(JSON.stringify({ f: owner, e: email, x: now() + 30 * 86400 })));
+    const t = `${payload}.${await hmac(actKey(env), payload)}`;
+    await pushTo(env, [email], {
+      title: `${name} möchte dich als Kontakt hinzufügen`,
+      body: 'Dann könnt ihr euch gegenseitig zu Fahrten einladen.',
+      tag: `contact-${owner}`, url: '?tab=settings', act: t,
+      actions: [{ action: 'accept', title: 'Annehmen' }, { action: 'decline', title: 'Ablehnen' }],
+    });
+  }
   return me(env, owner);
 }
+async function acceptContact(env, email, from) {
+  from = String(from || '').toLowerCase();
+  if (!(await linked(env, from, email))) throw new HttpError(404, 'no request');
+  const r = await env.DB.prepare('INSERT OR IGNORE INTO contacts(owner, email) VALUES (?, ?)').bind(email, from).run();
+  if (r.meta.changes) await pushTo(env, [from], { title: `${await firstName(env, email)} hat angenommen`, body: 'Ihr könnt euch jetzt gegenseitig zu Fahrten einladen.', tag: `contact-${email}`, url: '?tab=settings' });
+  return me(env, email);
+}
+async function declineContact(env, email, from) {
+  await env.DB.prepare('DELETE FROM contacts WHERE owner = ? AND email = ?').bind(String(from || '').toLowerCase(), email).run();
+  return me(env, email);
+}
+async function actContact(env, { t, action }) {
+  const [payload, sig] = String(t || '').split('.');
+  if (!payload || !sig || sig !== await hmac(actKey(env), payload)) throw new HttpError(401, 'bad token');
+  const { f, e, x } = JSON.parse(new TextDecoder().decode(unb64u(payload)));
+  if (x < now()) throw new HttpError(401, 'expired');
+  if (action === 'accept') await acceptContact(env, e, f);
+  else if (action === 'decline') await declineContact(env, e, f);
+  else throw new HttpError(400, 'bad action');
+  return json({ ok: true });
+}
 async function delContact(env, owner, email) {
-  await env.DB.prepare('DELETE FROM contacts WHERE owner = ? AND email = ?').bind(owner, email.toLowerCase()).run();
+  email = email.toLowerCase();
+  await env.DB.prepare('DELETE FROM contacts WHERE (owner = ? AND email = ?) OR (owner = ? AND email = ?)').bind(owner, email, email, owner).run();
   return me(env, owner);
 }
 
@@ -414,9 +464,9 @@ async function step(env, owner, trip, st) {
   }
   if (st.done) return;
   const who = (await env.DB.prepare('SELECT name FROM users WHERE email = ?').bind(owner).first())?.name?.split(' ')[0] || owner;
-  // Eingeladene, die auch als Kontakt eingetragen sind
+  // Eingeladene, die bestätigte Kontakte sind (beide Richtungen)
   const invited = trip.invite.length
-    ? (await env.DB.prepare(`SELECT email FROM contacts WHERE owner = ? AND email IN (${trip.invite.map(() => '?').join(',')})`).bind(owner, ...trip.invite).all()).results.map((r) => r.email)
+    ? (await env.DB.prepare(`SELECT c.email FROM contacts c JOIN contacts r ON r.owner = c.email AND r.email = c.owner WHERE c.owner = ? AND c.email IN (${trip.invite.map(() => '?').join(',')})`).bind(owner, ...trip.invite).all()).results.map((r) => r.email)
     : [];
 
   // 1. Vor der Abfahrt: Countdown in Minuten (Echtzeit aus dem Abfahrtsmonitor)

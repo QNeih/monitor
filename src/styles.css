@@ -156,15 +156,17 @@ input:focus{outline:none;border-color:var(--acc-ink)}
 .stepper>li.mark::after{width:14px;height:14px;margin-top:-7px;left:2px}
 .stepper .stoprow{background:var(--card);border-radius:10px;border-left:3px solid var(--acc);padding:8px 12px}
 .stepper .stoprow:disabled{opacity:1;cursor:default}
-.stepper li.passed .stoprow{opacity:.5;border-left-color:var(--line)}
+.stepper li.passed .stoprow{opacity:.5;border-left-color:var(--dim)}
 .stepper li.mark .nm{font-weight:600}
 /* gefahrene Haltestellen: zugeklappt als Kartenstapel */
 .stack{padding-bottom:8px}
 .stack::after{top:calc(50% - 4px)!important}
-.stack button{position:relative;z-index:1;width:100%;text-align:left;background:var(--card);border-radius:10px;border-left:3px solid var(--line);padding:10px 12px;color:var(--dim);font-size:.9rem}
+.stack button{position:relative;z-index:1;width:100%;text-align:left;background:var(--card);border-radius:10px;border-left:3px solid color-mix(in srgb,var(--dim) 60%,var(--card));padding:10px 12px;color:var(--dim);font-size:.9rem}
 .stack button b{color:var(--fg)}
 .stack{padding-bottom:10px}
 .stack i{position:absolute;z-index:0;left:30px;right:6px;bottom:5px;top:5px;border-radius:10px;background:color-mix(in srgb,var(--card) 70%,var(--dim));opacity:.55}
 .stack i+i{left:36px;right:12px;bottom:0;top:10px;opacity:.3}
 .stepper>li.fold::after{display:none}
 .fold button{width:100%;text-align:left;padding:6px 12px;color:var(--acc-ink);font-weight:600;font-size:.85rem}
+.req{gap:4px;padding-right:8px}
+.req .link{padding:8px 6px}

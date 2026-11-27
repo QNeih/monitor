@@ -104,6 +104,10 @@ function Account() {
     try { setMe(await api('/contacts', {}, { method: 'POST', body: { email } })); setEmail(''); } catch (e2) { setMsg(e2.message === 'bad email' ? 'Ungültige E-Mail.' : e2.message); }
   };
   const remove = async (c) => { if (confirm(`${c.email} entfernen?`)) setMe(await api('/contacts', { email: c.email }, { method: 'DELETE' })); };
+  const answer = async (c, a) => {
+    if (a === 'decline' && !confirm(`Anfrage von ${c.name || c.email} ablehnen?`)) return;
+    try { setMe(await api(`/contacts/${a}`, {}, { method: 'POST', body: { email: c.email } })); } catch (e) { setMsg(e.message); }
+  };
   const test = async () => { const d = await api('/push/test', {}, { method: 'POST' }); setMsg(d.sent ? 'Test gesendet.' : 'Kein Gerät angemeldet.'); };
 
   return (
@@ -119,18 +123,34 @@ function Account() {
         {push === 'on' && <button type="button" className="ghost" onClick={test}>Test-Benachrichtigung</button>}
       </div>
 
+      {me?.incoming?.length > 0 && (
+        <>
+          <h2 className="sec">Anfragen</h2>
+          <ul className="stoplist">
+            {me.incoming.map((c) => (
+              <li key={c.email} className="req">
+                <span className="grow contact"><b>{c.name || c.email}</b><small>{c.name ? `${c.email} · ` : ''}möchte dich als Kontakt</small></span>
+                <button type="button" className="link" onClick={() => answer(c, 'decline')}>Ablehnen</button>
+                <button type="button" className="primary small" onClick={() => answer(c, 'accept')}>Annehmen</button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
       <h2 className="sec">Kontakte</h2>
+      <p className="hint">Kontakte bestätigen sich gegenseitig. Danach könnt ihr euch zu Fahrten einladen.</p>
       <ul className="stoplist">
-        {(me?.contacts || []).map((c) => (
+        {[...(me?.contacts || []).map((c) => ({ ...c, ok: true })), ...(me?.outgoing || [])].map((c) => (
           <li key={c.email}>
-            <span className="grow contact"><b>{c.name || c.email}</b><small>{c.name ? `${c.email} · ` : ''}{c.devices ? 'App eingerichtet' : 'noch nicht angemeldet'}</small></span>
+            <span className="grow contact"><b>{c.name || c.email}</b><small>{c.name ? `${c.email} · ` : ''}{!c.ok ? 'wartet auf Bestätigung' : c.devices ? 'App eingerichtet' : 'Benachrichtigungen aus'}</small></span>
             <button type="button" className="x" aria-label={`${c.email} entfernen`} onClick={() => remove(c)}>✕</button>
           </li>
         ))}
       </ul>
       <form className="addrow" onSubmit={add}>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-Mail hinzufügen" autoComplete="email" />
-        <button type="submit" className="primary small" disabled={!email}>Hinzufügen</button>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-Mail (Google-Konto)" autoComplete="email" />
+        <button type="submit" className="primary small" disabled={!email}>Anfragen</button>
       </form>
       {msg && <p className="hint">{msg}</p>}
     </>
