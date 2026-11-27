@@ -90,28 +90,31 @@ function TripStops({ trip, now, onPick }) {
 }
 
 // Haltestellen als Stepper: bereits befahrene oben gestapelt (antippen zum Aufklappen), danach die folgenden.
+// Start (Einstieg) steht immer oben und ist nie wählbar; zählt nicht als „gefahren“.
 function StopList({ stops, now, onPick, mark }) {
   const [open, setOpen] = useState(false);
   const passed = (s) => t(s) < now - 30;
-  let n = 0;
-  while (n < stops.length - 1 && passed(stops[n])) n++; // letzte Haltestelle nie wegklappen
+  let e = 1; // Ende der gefahrenen Haltestellen (exklusiv), ohne Start und ohne letzte Haltestelle
+  while (e < stops.length - 1 && passed(stops[e])) e++;
+  const n = e - 1;
   const row = (s, i) => (
-    <StopRow key={s.id + s.plan} s={s} now={now} passed={i < n} mark={mark?.(i)}
-      onClick={onPick && i >= n && i > 0 ? () => onPick(s, i) : undefined} />
+    <StopRow key={s.id + s.plan} s={s} now={now} passed={i < e} mark={mark?.(i)}
+      onClick={onPick && i >= e ? () => onPick(s, i) : undefined} />
   );
   return (
     <ol className="stepper">
+      {row(stops[0], 0)}
       {n > 0 && (open
-        ? <>{stops.slice(0, n).map(row)}<li className="fold"><button type="button" onClick={() => setOpen(false)}>Gefahrene Haltestellen einklappen</button></li></>
+        ? <>{stops.slice(1, e).map((s, j) => row(s, 1 + j))}<li className="fold"><button type="button" onClick={() => setOpen(false)}>Gefahrene Haltestellen einklappen</button></li></>
         : (
           <li className="stack">
             <i />{n > 1 && <i />}
             <button type="button" onClick={() => setOpen(true)} aria-expanded="false">
-              <span><b>{n}</b> {n === 1 ? 'Haltestelle' : 'Haltestellen'} gefahren · bis {stops[n - 1].name}</span>
+              <span><b>{n}</b> {n === 1 ? 'Haltestelle' : 'Haltestellen'} gefahren · bis {stops[e - 1].name}</span>
             </button>
           </li>
         ))}
-      {stops.slice(n).map((s, j) => row(s, n + j))}
+      {stops.slice(e).map((s, j) => row(s, e + j))}
     </ol>
   );
 }
