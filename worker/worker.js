@@ -13,6 +13,7 @@
 //   POST /contacts {email} · DELETE /contacts?email=
 //   POST /push {subscription} · DELETE /push {endpoint} · POST /push/test
 //   GET|PUT|DELETE /trip                   laufender Sprung (für die Benachrichtigungen)
+//   POST /tick                             Cron-Schritt sofort ausführen (zum Testen; arbeitet nur gespeicherte Reisen ab)
 //
 // Bindings: DB (D1), VAPID_PRIVATE (JWK, geheim), VAPID_PUBLIC, SESSION_SECRET (geheim), GOOGLE_CLIENT_ID.
 // Jede JSON-Antwort enthält `now` (Serverzeit in Unix-Sekunden), damit die App eine falsch gehende Handyuhr ausgleicht.
@@ -57,6 +58,7 @@ export default {
         case 'GET /trip': return await getTrip(env, await user(env, request));
         case 'PUT /trip': return await putTrip(env, await user(env, request), await body(request));
         case 'DELETE /trip': return await delTrip(env, await user(env, request));
+        case 'POST /tick': await tick(env); return json({ ok: true }); // Cron-Schritt sofort ausführen (Test)
         default: return json({ error: 'not found' }, 404);
       }
     } catch (e) {
@@ -272,9 +274,11 @@ async function hmac(secret, data) {
 let googleKeys = null, googleKeysAt = 0;
 async function verifyGoogle(env, token) {
   const [h, p, s] = String(token).split('.');
-  if (!s) throw new HttpError(401, 'bad token');
-  const header = JSON.parse(new TextDecoder().decode(unb64u(h)));
-  const claims = JSON.parse(new TextDecoder().decode(unb64u(p)));
+  let header, claims;
+  try {
+    header = JSON.parse(new TextDecoder().decode(unb64u(h)));
+    claims = JSON.parse(new TextDecoder().decode(unb64u(p)));
+  } catch { throw new HttpError(401, 'bad token'); }
   if (!googleKeys || Date.now() - googleKeysAt > 3600e3 || !googleKeys.find((k) => k.kid === header.kid)) {
     googleKeys = (await (await fetch('https://www.googleapis.com/oauth2/v3/certs')).json()).keys;
     googleKeysAt = Date.now();
@@ -305,7 +309,7 @@ async function user(env, request) {
   const t = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
   const [payload, sig] = t.split('.');
   if (!payload || !sig || sig !== await hmac(env.SESSION_SECRET, payload)) throw new HttpError(401, 'not signed in');
-  const { e, x } = JSON.parse(new TextDecoder().decode(unb64u(payload)));
+  const { e, x } = JSON.parse(new TextDecoder().decode(unb64u(payload))); // signiert, also von uns
   if (x < now()) throw new HttpError(401, 'session expired');
   return e;
 }
