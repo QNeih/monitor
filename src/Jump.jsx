@@ -46,7 +46,7 @@ export default function Jump({ trip, setTrip, onHome }) {
           <span className="dir">{trip.direction}</span>
           <span className="sub">ab {shortName(trip.stopName)} · {hhmm(trip.ts)}{hhmm(trip.ts) !== trip.plan && <s> {trip.plan}</s>}</span>
         </span>
-        {!c.past && <span className="count"><b>{c.text}</b><small>{c.unit}</small></span>}
+        {!c.past && <span className="count"><small>in</small><b>{c.text}</b><small>{c.unit}</small></span>}
       </div>
 
       {!trip.dest && <StopSearch label="Ziel auswählen" placeholder="Wohin? (auch mit Umstieg)" onPick={(s) => setTrip({ ...trip, dest: { id: s.id, name: s.name } })} />}
@@ -198,7 +198,7 @@ function ReturnRows({ routes, now }) {
   return (
     <ul className="cards compact">
       {list.map(({ r, l }, i) => {
-        const s = l.stops[0], c = countdown(t(s), now), last = r.legs.filter((x) => x.type === 'ride').at(-1).stops.at(-1);
+        const s = l.stops[0], c = countdown(t(s), now, i === 0), last = r.legs.filter((x) => x.type === 'ride').at(-1).stops.at(-1);
         const late = s.rt && hhmm(s.rt) !== hhmm(s.plan);
         return (
           <li key={i}>
@@ -208,7 +208,7 @@ function ReturnRows({ routes, now }) {
                 <span className="dir">{l.direction}</span>
                 <span className="times"><b className={late ? 'late' : s.rt ? 'rt' : ''}>{hhmm(t(s))}</b>{late && <s>{hhmm(s.plan)}</s>}<small>an {hhmm(t(last))}</small></span>
               </span>
-              <span className="count"><b>{c.text}</b>{c.unit && <small>{c.unit}</small>}</span>
+              <span className="count">{!c.past && <small>in</small>}<b>{c.text}</b>{c.unit && <small>{c.unit}</small>}</span>
             </div>
           </li>
         );

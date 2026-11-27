@@ -35,10 +35,12 @@ const dayFmt = new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', wee
 export const hhmm = (ts) => (ts ? hm.format(new Date(Math.floor(ts / 60) * 60000)) : '–');
 export const day = (ts) => dayFmt.format(new Date(ts * 1000));
 
-export function countdown(ts, now) {
+// Countdown bis ts: mit Sekunden (m:ss) nur für die nächste Abfahrt, sonst ganze Minuten.
+export function countdown(ts, now, seconds = true) {
   const s = Math.round(ts - now);
   if (s <= 0) return { text: 'jetzt', past: true };
   if (s >= 3600) return { text: `${Math.floor(s / 3600)} h ${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}`, unit: 'min' };
+  if (!seconds) return { text: s < 60 ? '<1' : String(Math.floor(s / 60)), unit: 'min' };
   return { text: `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`, unit: 'min' };
 }
 

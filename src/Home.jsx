@@ -102,14 +102,14 @@ function Board({ stop, filter, setFilter, onOpenStops, onPickTrip }) {
       {!deps && !err && <p className="hint pad">Lade Abfahrten …</p>}
       {deps && !shown.length && <p className="hint pad">Keine Abfahrten in dieser Richtung.</p>}
       <ul className="cards">
-        {shown.map((d) => <DepartureCard key={d.key} d={d} now={now} onClick={() => onPickTrip({ stop, dep: d })} />)}
+        {shown.map((d) => <DepartureCard key={d.key} d={d} now={now} seconds={d === shown.find((x) => x.ts > now)} onClick={() => onPickTrip({ stop, dep: d })} />)}
       </ul>
     </>
   );
 }
 
-function DepartureCard({ d, now, onClick }) {
-  const c = countdown(d.ts, now);
+function DepartureCard({ d, now, seconds, onClick }) {
+  const c = countdown(d.ts, now, seconds);
   return (
     <li>
       <button type="button" className={`card${c.past ? ' gone' : ''}`} onClick={onClick}>
@@ -122,7 +122,7 @@ function DepartureCard({ d, now, onClick }) {
             {!d.rt && <small>Fahrplan</small>}
           </span>
         </span>
-        <span className="count"><b>{c.text}</b>{c.unit && <small>{c.unit}</small>}</span>
+        <span className="count">{!c.past && <small>in</small>}<b>{c.text}</b>{c.unit && <small>{c.unit}</small>}</span>
         <Chevron className="chev" />
       </button>
     </li>
