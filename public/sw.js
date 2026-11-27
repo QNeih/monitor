@@ -1,6 +1,6 @@
 // Offline-Fallback für die App-Shell und Empfang der Push-Nachrichten.
 // App-Dateien: immer zuerst das Netz (am HTTP-Cache vorbei), Cache nur ohne Netz. Abfahrten (Worker) werden nie gecacht.
-const CACHE = 'monitor-v22';
+const CACHE = 'monitor-v23';
 self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', 'index.html'])).then(() => self.skipWaiting())));
 self.addEventListener('activate', (e) => e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', (e) => {
@@ -32,7 +32,7 @@ self.addEventListener('push', (e) => {
       tag: m.tag,
       renotify: !m.silent,
       silent: !!m.silent,
-      icon: 'icons/icon-192.png',
+      icon: 'icons/notify-192.png',
       badge: 'icons/badge-96.png',
       data: { url: m.url || '?tab=jump' },
     });
