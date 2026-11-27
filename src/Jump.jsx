@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { api, countdown, day, hhmm, shortName, useNow, usePoll } from './lib.js';
+import { useEffect, useState } from 'react';
+import { api, countdown, day, hhmm, shortName, useAuth, useNow, usePoll } from './lib.js';
 import StopSearch from './StopSearch.jsx';
 
 export const TRIP_TTL = 48 * 3600; // Sprung setzt sich spätestens nach 48 h selbst zurück
@@ -54,6 +54,8 @@ export default function Jump({ trip, setTrip, onHome }) {
         ? <Journey key={trip.dest.id} trip={trip} now={now} onClear={() => setTrip({ ...trip, dest: null })} />
         : <TripStops trip={trip} now={now} onPick={(s) => setTrip({ ...trip, dest: { id: s.id, name: s.name } })} />}
 
+      <Notify trip={trip} setTrip={setTrip} />
+
       <p className="hint small">Setzt sich automatisch zurück am {day(trip.selectedAt + TRIP_TTL)}, {hhmm(trip.selectedAt + TRIP_TTL)}.</p>
       <button type="button" className="ghost" onClick={() => setTrip(null)}>Sprung beenden</button>
     </section>
@@ -105,6 +107,7 @@ function StopRow({ s, now, onClick, mark }) {
 
 function Journey({ trip, now, onClear }) {
   const [route, setRoute] = useState(null);
+  const [showLegs, setShowLegs] = useState(false);
   const [err, setErr] = useState('');
   usePoll(() => {
     api('/route', { from: trip.stopId, to: trip.dest.id, t: planTs(trip) })
@@ -121,50 +124,53 @@ function Journey({ trip, now, onClear }) {
 
   const rides = route.legs.filter((l) => l.type === 'ride');
   const arrival = rides.at(-1).stops.at(-1);
+  const arrived = now >= t(arrival);
   return (
     <>
       <div className="dest">
-        <span>Ziel <b>{shortName(trip.dest.name)}</b> · an {hhmm(t(arrival))}{rides.length > 1 && ` · ${rides.length - 1}× umsteigen`}</span>
+        <span>Ziel <b>{shortName(trip.dest.name)}</b> · {arrived ? 'angekommen' : 'an'} {hhmm(t(arrival))}{rides.length > 1 && ` · ${rides.length - 1}× umsteigen`}</span>
         <button type="button" className="x" onClick={onClear} aria-label="Ziel entfernen">✕</button>
       </div>
-      {!route.matched && <p className="banner">{shortName(trip.dest.name)} erreichst du nicht mit der gewählten Fahrt ({trip.line} → {trip.direction}, {trip.plan}). Das ist die nächste passende Verbindung.</p>}
-      {route.legs.map((l, i) => l.type === 'walk'
-        ? <p key={i} className="walk">Fußweg{l.minutes ? ` ${l.minutes} min` : ''}</p>
-        : (
-          <div key={i} className="leg">
-            <h2 className="sec"><span className="line sm">{l.line}</span> {l.direction}</h2>
-            <ol className="stops">
-              {l.stops.map((s, j) => (
-                <StopRow key={s.id + s.plan} s={s} now={now}
-                  mark={j === 0 ? (i === 0 ? 'Start' : 'Einstieg') : j === l.stops.length - 1 ? (l === rides.at(-1) ? 'Ausstieg' : 'Umstieg') : null} />
-              ))}
-            </ol>
-          </div>
-        ))}
-      <h2 className="sec">Zurück nach {shortName(trip.stopName)}</h2>
-      {rides.map((l, i) => <Return key={i} from={l.stops.at(-1)} home={trip.stopId} now={now} />)}
+      {!route.matched && !arrived && <p className="banner">{shortName(trip.dest.name)} erreichst du nicht mit der gewählten Fahrt ({trip.line} → {trip.direction}, {trip.plan}). Das ist die nächste passende Verbindung.</p>}
+      {arrived ? (
+        <>
+          <h2 className="sec">Zurück nach {shortName(trip.stopName)}</h2>
+          {rides.slice().reverse().map((l, i) => <ReturnList key={i} from={l.stops.at(-1)} home={trip.stopId} now={now} arr={t(l.stops.at(-1))} />)}
+          <button type="button" className="ghost" onClick={() => setShowLegs((x) => !x)}>{showLegs ? 'Verlauf ausblenden' : 'Verlauf anzeigen'}</button>
+          {showLegs && <Legs route={route} rides={rides} now={now} />}
+        </>
+      ) : <Legs route={route} rides={rides} now={now} />}
     </>
   );
 }
 
-// Bahnen zurück ab Umstiegs- bzw. Ausstiegshaltestelle, sobald die Bahn dort eintrifft.
-function Return({ from, home, now }) {
-  const arr = t(from);
-  const open = now >= arr - 120;
-  return (
-    <div className="ret">
-      <h3>ab {from.name}</h3>
-      {open ? <ReturnList from={from} home={home} now={now} arr={arr} /> : <p className="hint">Erscheint bei Ankunft um {hhmm(arr)}.</p>}
-    </div>
-  );
+function Legs({ route, rides, now }) {
+  return route.legs.map((l, i) => l.type === 'walk'
+    ? <p key={i} className="walk">Fußweg{l.minutes ? ` ${l.minutes} min` : ''}</p>
+    : (
+      <div key={i} className="leg">
+        <h2 className="sec"><span className="line sm">{l.line}</span> {l.direction}</h2>
+        <ol className="stops">
+          {l.stops.map((s, j) => (
+            <StopRow key={s.id + s.plan} s={s} now={now}
+              mark={j === 0 ? (i === 0 ? 'Start' : 'Einstieg') : j === l.stops.length - 1 ? (l === rides.at(-1) ? 'Ausstieg' : 'Umstieg') : null} />
+          ))}
+        </ol>
+      </div>
+    ));
 }
 
+// Bahnen zurück ab Ausstiegs- und Umstiegshaltestelle (erst nach der Ankunft am Ziel).
 function ReturnList({ from, home, now, arr }) {
   const [routes, setRoutes] = useState(null);
   usePoll(() => {
     api('/route', { from: from.id, to: home, t: Math.floor(Math.max(arr, Date.now() / 1000)) })
       .then((d) => setRoutes(d.routes)).catch(() => setRoutes((r) => r || []));
   }, [from.id, home], { at: [10], stale: 60 });
+  return <div className="ret"><h3>ab {from.name}</h3><ReturnRows routes={routes} now={now} /></div>;
+}
+
+function ReturnRows({ routes, now }) {
   if (!routes) return <p className="hint">Lade Rückfahrten …</p>;
   const list = routes.map((r) => ({ r, l: r.legs.find((x) => x.type === 'ride') })).filter(({ l }) => l && t(l.stops[0]) > now - 20).slice(0, 4);
   if (!list.length) return <p className="hint">Keine Rückfahrt gefunden.</p>;
@@ -187,5 +193,33 @@ function ReturnList({ from, home, now, arr }) {
         );
       })}
     </ul>
+  );
+}
+
+// Benachrichtigungen für diese Reise: Countdown bis zur Abfahrt, Kontakte einladen (nur angemeldet).
+function Notify({ trip, setTrip }) {
+  const auth = useAuth();
+  const [contacts, setContacts] = useState(null);
+  useEffect(() => { if (auth) api('/me').then((d) => setContacts(d.contacts)).catch(() => setContacts([])); }, [auth]);
+  if (!auth) return <p className="hint small">Für Benachrichtigungen (Countdown, Kontakte) in den Einstellungen mit Google anmelden.</p>;
+  const invite = trip.invite || [];
+  const toggle = (e) => setTrip({ ...trip, invite: invite.includes(e) ? invite.filter((x) => x !== e) : [...invite, e] });
+  return (
+    <>
+      <h2 className="sec">Benachrichtigungen</h2>
+      <div className="box">
+        <label className="switch flat">Countdown bis zur Abfahrt
+          <input type="checkbox" role="switch" checked={trip.countdown !== false} onChange={(e) => setTrip({ ...trip, countdown: e.target.checked })} />
+        </label>
+        {contacts?.length > 0 && <p className="hint">Kontakte bekommen Abfahrt, Verspätung und Ankunft:</p>}
+        {contacts?.map((c) => (
+          <label key={c.email} className="check">
+            <input type="checkbox" checked={invite.includes(c.email)} onChange={() => toggle(c.email)} />
+            <span>{c.name || c.email}{!c.devices && <small> · noch keine App</small>}</span>
+          </label>
+        ))}
+        {contacts && !contacts.length && <p className="hint">Kontakte fügst du in den Einstellungen hinzu.</p>}
+      </div>
+    </>
   );
 }

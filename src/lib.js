@@ -7,11 +7,22 @@ export const API = 'https://monitor.qneih.workers.dev';
 let skew = 0;
 export const nowS = () => Date.now() / 1000 + skew;
 
-export async function api(path, params = {}) {
+export const GOOGLE_CLIENT_ID = '831637996840-c5j3gr7dnrerbguae5dl1pf8c72df47b.apps.googleusercontent.com';
+
+// Anmeldung: Sitzungstoken des Workers (180 Tage) im Gerät.
+export const getAuth = () => { try { return JSON.parse(localStorage.getItem('auth')); } catch { return null; } };
+export const setAuth = (a) => { try { a ? localStorage.setItem('auth', JSON.stringify(a)) : localStorage.removeItem('auth'); } catch {} window.dispatchEvent(new Event('auth')); };
+
+export async function api(path, params = {}, { method = 'GET', body } = {}) {
   const u = new URL(API + path);
   for (const [k, v] of Object.entries(params)) if (v != null) u.searchParams.set(k, v);
   const t0 = Date.now();
-  const r = await fetch(u, { cache: 'no-store' });
+  const headers = {};
+  const a = getAuth();
+  if (a?.token) headers.Authorization = `Bearer ${a.token}`;
+  if (body) headers['Content-Type'] = 'application/json';
+  const r = await fetch(u, { cache: 'no-store', method, headers, body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401 && a?.token) setAuth(null);
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
   if (d.now) skew = d.now + (Date.now() - t0) / 2000 - Date.now() / 1000;
@@ -105,3 +116,45 @@ export function normalize(events) {
 }
 
 export const shortName = (n = '') => n.replace(/,\s*Köln.*$/, '');
+
+export function useAuth() {
+  const [a, set] = useState(getAuth);
+  useEffect(() => { const f = () => set(getAuth()); window.addEventListener('auth', f); return () => window.removeEventListener('auth', f); }, []);
+  return a;
+}
+
+// --- Push --------------------------------------------------------------------------------------
+
+const VAPID = 'BEPM96CDxwUZTivXrMAjDQgb2yzs2DqGc5utaOlTLoJ7lPAlu_nw3cdqSyFP3kNS08M9VFxpvWPFqaq5Tja7XIc';
+const key = (b64) => Uint8Array.from(atob(b64.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (b64.length % 4)) % 4)), (c) => c.charCodeAt(0));
+export const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+
+export async function pushState() {
+  if (!pushSupported()) return 'unsupported';
+  if (Notification.permission === 'denied') return 'denied';
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = reg && (await reg.pushManager.getSubscription());
+  return sub ? 'on' : 'off';
+}
+
+export async function enablePush() {
+  if (!pushSupported()) throw new Error('Dieses Gerät kann keine Web-Push-Nachrichten (iPhone: erst „Zum Home-Bildschirm“).');
+  if ((await Notification.requestPermission()) !== 'granted') throw new Error('Benachrichtigungen nicht erlaubt.');
+  const reg = await navigator.serviceWorker.ready;
+  const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key(VAPID) }));
+  await api('/push', {}, { method: 'POST', body: { subscription: sub.toJSON() } });
+}
+
+export async function disablePush() {
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = reg && (await reg.pushManager.getSubscription());
+  if (!sub) return;
+  await api('/push', {}, { method: 'DELETE', body: { endpoint: sub.endpoint } }).catch(() => {});
+  await sub.unsubscribe();
+}
+
+// Laufenden Sprung an den Worker melden (für die Benachrichtigungen). Ohne Anmeldung: nichts.
+export function syncTrip(trip) {
+  if (!getAuth()?.token) return;
+  (trip ? api('/trip', {}, { method: 'PUT', body: { trip } }) : api('/trip', {}, { method: 'DELETE' })).catch(() => {});
+}

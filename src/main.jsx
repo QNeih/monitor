@@ -4,18 +4,31 @@ import Home from './Home.jsx';
 import Jump, { TRIP_TTL } from './Jump.jsx';
 import Settings from './Settings.jsx';
 import { GearCat, HomeCat, JumpCat } from './icons.jsx';
-import { nowS, useStored } from './lib.js';
+import { nowS, syncTrip, useStored } from './lib.js';
 import './styles.css';
 
 function App() {
   const [tab, setTab] = useStored('tab', 'home');
-  const [trip, setTripRaw] = useStored('trip', null);
-  const [settings, setSettings] = useStored('settings', { accent: 'green', dark: false });
+  const [trip, setTripLocal] = useStored('trip', null);
+  const [settings, setSettings] = useStored('settings', { accent: 'green', dark: true, v: 2 });
+  // Jede Änderung am Sprung auch an den Worker (Benachrichtigungen), wenn angemeldet.
+  const setTripRaw = (next) => setTripLocal((old) => { const n = typeof next === 'function' ? next(old) : next; syncTrip(n); return n; });
+
+  // v2: dunkles Design ist Standard (auch für Geräte, die die alte Voreinstellung gespeichert haben).
+  useEffect(() => { if (settings.v !== 2) setSettings((s) => ({ ...s, dark: true, v: 2 })); }, [settings.v, setSettings]);
+  // Tab aus einer angetippten Benachrichtigung (?tab=jump oder Nachricht vom Service Worker).
+  useEffect(() => {
+    const q = new URLSearchParams(location.search).get('tab');
+    if (q) { setTab(q); history.replaceState(null, '', location.pathname); }
+    const f = (e) => e.data?.tab && setTab(e.data.tab);
+    navigator.serviceWorker?.addEventListener('message', f);
+    return () => navigator.serviceWorker?.removeEventListener('message', f);
+  }, [setTab]);
   const [, force] = useState(0);
 
   // Sprung nach 48 h verwerfen (auch beim Start, falls die App so lange zu war).
   const expired = trip && nowS() - trip.selectedAt > TRIP_TTL;
-  useEffect(() => { if (expired) setTripRaw(null); }, [expired, setTripRaw]);
+  useEffect(() => { if (expired) setTripLocal(null); }, [expired, setTripLocal]);
   useEffect(() => { const i = setInterval(() => force((x) => x + 1), 60000); return () => clearInterval(i); }, []);
 
   useEffect(() => {
@@ -26,7 +39,7 @@ function App() {
   }, [settings]);
 
   const pickTrip = ({ stop, dep }) => {
-    setTripRaw({ stopId: stop.id, stopName: stop.name, line: dep.line, direction: dep.direction, platform: dep.platform, plan: dep.plan, ts: dep.ts, selectedAt: Math.floor(nowS()), dest: null });
+    setTripRaw({ stopId: stop.id, stopName: stop.name, line: dep.line, direction: dep.direction, platform: dep.platform, plan: dep.plan, ts: dep.ts, selectedAt: Math.floor(nowS()), dest: null, countdown: true, invite: [] });
     setTab('jump');
   };
 

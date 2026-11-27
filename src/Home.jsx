@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { api, countdown, hhmm, normalize, nowS, shortName, useNow, usePoll, useStored } from './lib.js';
-import { Chevron, Down, Swap } from './icons.jsx';
+import { Arrow, Chevron, Down, Swap } from './icons.jsx';
 import StopSearch from './StopSearch.jsx';
 
 // Haus: eigene Haltestellen (anfangs leer, gespeichert im Gerät), Richtungsumschalter, Abfahrten als Karten.
@@ -83,7 +83,8 @@ function Board({ stop, filter, setFilter, onOpenStops, onPickTrip }) {
     setFilter(options[(i + 1) % options.length].id);
   };
 
-  const shown = (deps || []).filter((d) => d.ts > now - 20 && (filter === 'all' || d.platform === filter));
+  const SHOW = 8; // immer 8 Bahnen, egal ob eine oder alle Richtungen
+  const shown = (deps || []).filter((d) => d.ts > now - 20 && (filter === 'all' || d.platform === filter)).slice(0, SHOW);
   const stale = okAt && now - okAt > 90;
 
   return (
@@ -93,7 +94,7 @@ function Board({ stop, filter, setFilter, onOpenStops, onPickTrip }) {
           <b>{shortName(stop.name)}</b><Down />
         </button>
         <button type="button" className="dirbtn" onClick={next} disabled={options.length < 2} title="Fahrtrichtung umstellen">
-          <Swap /><span>{cur.id === 'all' ? cur.label : `→ ${cur.label}`}</span>
+          {cur.id === 'all' ? <Swap /> : <Arrow />}<span>{cur.label}</span>
         </button>
       </div>
       {stale && <p className="banner">Keine aktuellen Daten seit {hhmm(okAt)} – kein Netz?</p>}
